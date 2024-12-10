@@ -1,6 +1,7 @@
 package core
 
 import (
+	"log"
 	"sw/global"
 	"sw/model/node"
 	"sw/model/service"
@@ -9,7 +10,8 @@ import (
 	"gorm.io/gorm"
 )
 
-func initOrm() {
+func InitOrm() {
+	log.Println("初始化orm======================")
 	db, err := gorm.Open(sqlite.Open(global.Config.Sqlite.Path), &gorm.Config{})
 	if err != nil {
 		panic(err)
@@ -19,5 +21,6 @@ func initOrm() {
 		&node.NodeModel{},
 	)
 	global.DB = db
+	log.Println("完成orm======================")
 
 }

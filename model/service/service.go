@@ -1,7 +1,10 @@
 package service
 
 import (
+	"fmt"
 	"sw/global"
+	"sw/opc"
+	"time"
 
 	"gorm.io/gorm"
 )
@@ -9,6 +12,14 @@ import (
 type ServiceModel struct {
 	gorm.Model
 	Opc string `json:"opc" yaml:"opc"`
+}
+
+func (s *ServiceModel) AfterCreate(tx *gorm.DB) (err error) {
+	err = global.OpcGateway.AddClinet(fmt.Sprintf("%d", s.ID), opc.OpcConfig{
+		Endpoint: s.Opc,
+		Interval: 5 * time.Second,
+	})
+	return
 }
 
 type AddService struct {

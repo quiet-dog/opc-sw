@@ -39,8 +39,23 @@ func DeleteNode(c *gin.Context) {
 	c.JSON(200, dNode)
 }
 
+type FindNodeParam struct {
+	ServiceId uint `json:"serviceId"`
+}
+
 func GetNodeList(c *gin.Context) {
+	var f FindNodeParam
+	if err := c.ShouldBindJSON(&f); err != nil {
+		c.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
+
+	if f.ServiceId == 0 {
+		c.JSON(200, []node.NodeModel{})
+		return
+	}
+
 	var nodes []*node.NodeModel
-	global.DB.Find(&nodes)
+	global.DB.Where("service_id = ?", f.ServiceId).Find(&nodes)
 	c.JSON(200, nodes)
 }

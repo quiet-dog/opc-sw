@@ -1,0 +1,8 @@
+sqlite:
+  path: ./opc.db
+server:
+  port: 8080
+sw:
+  host: "127.0.0.1"
+  port: 9020
+  topic: "/topic/info"

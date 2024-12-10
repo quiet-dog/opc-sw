@@ -1,6 +1,7 @@
 package node
 
 import (
+	"fmt"
 	"sw/global"
 
 	"gorm.io/gorm"
@@ -11,6 +12,11 @@ type NodeModel struct {
 	NodeId    string `json:"nodeId"`
 	Param     string `json:"param"`
 	ServiceId uint   `json:"serviceId"`
+}
+
+func (n *NodeModel) AfterCreate(tx *gorm.DB) error {
+	err := global.OpcGateway.AddNode(fmt.Sprintf("%d", n.ServiceId), n.NodeId)
+	return err
 }
 
 type AddNode struct {
