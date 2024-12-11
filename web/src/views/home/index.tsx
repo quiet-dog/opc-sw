@@ -6,6 +6,27 @@ import { RouterLink } from "vue-router";
 
 export function useHomeHook() {
     const dialog = useDialog()
+    let socket = new WebSocket(`ws://${location.host}/ws`)
+
+    socket.onopen = () => {
+        console.log("连接成功")
+    }
+    socket.onmessage = (e) => {
+        // console.log("数据", e.data)
+        let data = JSON.parse(e.data)
+        table.value.forEach((item: any) => {
+            if (item.nodeId === data.nodeId) {
+                item.value = data.value
+                item.time = data.sourceTimestamp
+            }
+        })
+    }
+    socket.onclose = () => {
+        socket = new WebSocket(`ws://${location.host}/ws`)
+    }
+    socket.onerror = () => {
+        socket = new WebSocket(`ws://${location.host}/ws`)
+    }
 
 
     const menus = ref([
@@ -43,6 +64,7 @@ export function useHomeHook() {
     const addNode = () => {
         const nodeId = ref("")
         const param = ref("")
+        const description = ref("")
         const serviceId = selectValue.value
         dialog.create({
             title: "添加节点",
@@ -61,6 +83,13 @@ export function useHomeHook() {
                         "onUpdate:value": (val: string) => {
                             param.value = val
                         }
+                    }),
+                    h(NInput, {
+                        placeholder: "请输入描述",
+                        modelValue: description.value,
+                        "onUpdate:value": (val: string) => {
+                            description.value = val
+                        }
                     })
                 ])
             },
@@ -69,6 +98,7 @@ export function useHomeHook() {
                 await http.post("/node", {
                     nodeId: nodeId.value,
                     param: param.value,
+                    description: description.value,
                     serviceId
                 })
                 getNodes()
@@ -115,5 +145,6 @@ export function useHomeHook() {
         changeSelect,
         addNode,
         table,
+        getNodes
     }
 }

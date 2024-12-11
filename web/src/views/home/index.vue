@@ -2,20 +2,20 @@
 import { NButton, NLayout, NLayoutSider, NMenu, NSelect, NSpace } from 'naive-ui';
 import { useHomeHook } from './index'
 import OpcTable from "../opc/index.vue";
-const {  menus,selectValue,changeSelect,addNode,table } = useHomeHook();
+const { menus, selectValue, changeSelect, addNode, table, getNodes } = useHomeHook();
 
 </script>
 
 <template>
     <div>
-        <NButton @click="addNode">添加NodeId</NButton>
+        <NButton  @click="addNode">添加NodeId</NButton>
         <NSpace vertical>
             <NLayout>
                 <NLayoutSider has-sider>
-                    <NSelect @update-value="changeSelect" v-model:value="selectValue" :options="menus" ></NSelect>
+                    <NSelect @update-value="changeSelect" v-model:value="selectValue" :options="menus"></NSelect>
                 </NLayoutSider>
                 <NLayout>
-                    <OpcTable :tableList="table" />
+                    <OpcTable @refresh="() => getNodes()" :tableList="table" />
                 </NLayout>
             </NLayout>
         </NSpace>

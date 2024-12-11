@@ -1,17 +1,23 @@
 package node
 
 import (
+	"encoding/json"
 	"fmt"
 	"sw/global"
+	"sw/opc"
+	"time"
 
 	"gorm.io/gorm"
 )
 
 type NodeModel struct {
 	gorm.Model
-	NodeId    string `json:"nodeId"`
-	Param     string `json:"param"`
-	ServiceId uint   `json:"serviceId"`
+	NodeId      string      `json:"nodeId"`
+	Param       string      `json:"param"`
+	ServiceId   uint        `json:"serviceId"`
+	Description string      `json:"description"`
+	Time        time.Time   `gorm:"-" json:"time"`
+	Value       interface{} `gorm:"-" json:"value"`
 }
 
 func (n *NodeModel) AfterCreate(tx *gorm.DB) error {
@@ -19,10 +25,28 @@ func (n *NodeModel) AfterCreate(tx *gorm.DB) error {
 	return err
 }
 
+func (n *NodeModel) AfterFind(tx *gorm.DB) error {
+	var notify opc.Notify
+	b, err := global.Redis.Get(global.Ctx, n.NodeId).Result()
+	if err != nil {
+		fmt.Println("获取redis错误", err.Error())
+		return nil
+	}
+	err = json.Unmarshal([]byte(b), &notify)
+	if err != nil {
+		fmt.Println("json unmarshal error", err.Error())
+		return nil
+	}
+	n.Time = notify.SourceTimestamp
+	n.Value = notify.Value
+	return nil
+}
+
 type AddNode struct {
-	NodeId    string `json:"nodeId"`
-	Param     string `json:"param"`
-	ServiceId uint   `json:"serviceId"`
+	NodeId      string `json:"nodeId"`
+	Param       string `json:"param"`
+	ServiceId   uint   `json:"serviceId"`
+	Description string `json:"description"`
 }
 
 type UpdateNode struct {
@@ -32,9 +56,10 @@ type UpdateNode struct {
 
 func LoadAddNode(add AddNode) *NodeModel {
 	return &NodeModel{
-		NodeId:    add.NodeId,
-		Param:     add.Param,
-		ServiceId: add.ServiceId,
+		NodeId:      add.NodeId,
+		Param:       add.Param,
+		ServiceId:   add.ServiceId,
+		Description: add.Description,
 	}
 }
 
@@ -44,6 +69,7 @@ func LoadUpdateNode(update UpdateNode) *NodeModel {
 	n.NodeId = update.NodeId
 	n.Param = update.Param
 	n.ServiceId = update.ServiceId
+	n.Description = update.Description
 	return &n
 }
 

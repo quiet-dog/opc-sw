@@ -18,7 +18,7 @@ func InitOpc() {
 		log.Println("遍历服务", s.Opc)
 		err := global.OpcGateway.AddClinet(fmt.Sprintf("%d", s.ID), opc.OpcConfig{
 			Endpoint: s.Opc,
-			Interval: 5 * time.Second,
+			Interval: 60 * time.Second,
 		})
 		if err != nil {
 			fmt.Println("连接OPC服务器失败" + s.Opc)

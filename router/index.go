@@ -9,6 +9,7 @@ import (
 func InitRouter() *gin.Engine {
 	r := gin.Default()
 	a := r.Group("/api")
+	r.GET("/ws", controller.Connect)
 	a.POST("/node/list", controller.GetNodeList)
 	a.POST("/node", controller.CreateNode)
 	a.POST("/node/update", controller.UpdateNode)

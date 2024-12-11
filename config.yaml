@@ -6,3 +6,8 @@ sw:
   host: "127.0.0.1"
   port: 9020
   topic: "/topic/info"
+redis:
+  host: "127.0.0.1"
+  port: 6379
+  db: 0
+  password: ""

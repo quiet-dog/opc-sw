@@ -17,8 +17,11 @@ var f embed.FS
 func main() {
 	core.InitViper()
 	core.InitOrm()
+	core.InitRedis()
 	// core.InitSw()
 	core.InitOpc()
+	core.InitOpcCache()
+	core.InitWs()
 	r := router.InitRouter()
 	st, _ := fs.Sub(f, "web/dist")
 	r.StaticFS("/static", http.FS(st))
