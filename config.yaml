@@ -5,7 +5,7 @@ server:
 sw:
   host: "127.0.0.1"
   port: 9020
-  topic: "/topic/info"
+  topic: "/app/deviceInfo"
 redis:
   host: "127.0.0.1"
   port: 6379
