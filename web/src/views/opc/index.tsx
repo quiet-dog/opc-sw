@@ -1,5 +1,5 @@
 import { NButton } from "naive-ui";
-import { h, ref } from "vue";
+import { h, ref, defineEmits } from "vue";
 import http from "../../http";
 
 export function useOpcHook() {
@@ -18,6 +18,10 @@ export function useOpcHook() {
         {
             title: "描述",
             key: "description",
+        },
+        {
+            title: "类型",
+            key: "type",
         },
         {
             title: "当前值",

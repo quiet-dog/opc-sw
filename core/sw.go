@@ -74,7 +74,7 @@ type EquipmentInfoDTO struct {
 
 func InitSw() {
 	// WebSocket 连接信息
-	url := fmt.Sprintf("ws://%s:%d/ws", global.Config.Sw.Host, global.Config.Sw.Port)
+	url := fmt.Sprintf("ws://%s:%s/ws", global.Config.Sw.Host, global.Config.Sw.Port)
 	header := http.Header{}
 	ctx := context.Background()
 
@@ -202,11 +202,12 @@ func InitSw() {
 								// 		}
 								// 	}
 								// }
-
+								fmt.Println("发送数据到后台==222=============", result)
 								jsonStr, err := json.Marshal(result)
 								if err != nil {
 									continue
 								}
+								fmt.Println("发送数据到后台===============", string(jsonStr))
 								// fmt.Println("发送数据到后台", string(jsonStr))
 
 								stompConn.Send(global.Config.Sw.Topic, "application/json", jsonStr)

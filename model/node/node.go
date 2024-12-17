@@ -18,6 +18,7 @@ type NodeModel struct {
 	Description string      `json:"description"`
 	Time        time.Time   `gorm:"-" json:"time"`
 	Value       interface{} `gorm:"-" json:"value"`
+	Type        string      `gorm:"-" json:"type"`
 }
 
 func (n *NodeModel) AfterCreate(tx *gorm.DB) error {
@@ -39,6 +40,7 @@ func (n *NodeModel) AfterFind(tx *gorm.DB) error {
 	}
 	n.Time = notify.SourceTimestamp
 	n.Value = notify.Value
+	n.Type = notify.Type
 	return nil
 }
 

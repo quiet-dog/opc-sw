@@ -123,6 +123,7 @@ export function useHomeHook() {
         http.post("/node/list", {
             serviceId: selectValue.value
         }).then(res => {
+            console.log("res.data", res.data)
             table.value = res.data
         })
     }
