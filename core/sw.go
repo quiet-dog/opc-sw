@@ -145,6 +145,10 @@ func InitSw() {
 												{
 													environment.Value = float64(msg.Value.(float32))
 												}
+											case "uint32":
+												{
+													environment.Value = float64(msg.Value.(uint32))
+												}
 											}
 										}
 									}
@@ -166,6 +170,10 @@ func InitSw() {
 										case "float32":
 											{
 												threhold.Value = float64(msg.Value.(float32))
+											}
+										case "uint32":
+											{
+												threhold.Value = float64(msg.Value.(uint32))
 											}
 										}
 

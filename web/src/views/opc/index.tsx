@@ -45,7 +45,7 @@ export function useOpcHook() {
                             emit("refresh")
                         })
                     }
-                })
+                }, "删除")
             }
         }
     ])
