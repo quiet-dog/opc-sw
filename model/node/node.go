@@ -22,12 +22,15 @@ type NodeModel struct {
 }
 
 func (n *NodeModel) AfterCreate(tx *gorm.DB) error {
-	err := global.OpcGateway.AddNode(fmt.Sprintf("%d", n.ServiceId), n.NodeId)
+	err := global.OpcGateway.AddNode(fmt.Sprintf("%d", n.ServiceId), opc.NodeId{
+		ID:   uint64(n.ID),
+		Node: n.NodeId,
+	})
 	return err
 }
 
 func (n *NodeModel) AfterFind(tx *gorm.DB) error {
-	var notify opc.Notify
+	var notify opc.Data
 	b, err := global.Redis.Get(global.Ctx, n.NodeId).Result()
 	if err != nil {
 		fmt.Println("获取redis错误", err.Error())
@@ -38,9 +41,9 @@ func (n *NodeModel) AfterFind(tx *gorm.DB) error {
 		fmt.Println("json unmarshal error", err.Error())
 		return nil
 	}
-	n.Time = notify.SourceTimestamp
+	n.Time = notify.SourceTime
 	n.Value = notify.Value
-	n.Type = notify.Type
+	n.Type = notify.DataType
 	return nil
 }
 

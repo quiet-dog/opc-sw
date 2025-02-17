@@ -28,7 +28,7 @@ func (c *Handler) OnOpen(socket *gws.Conn) {
 	// 获取redis缓存的所有数据
 	keys, _ := global.Redis.Keys(global.Ctx, "*").Result()
 	for _, key := range keys {
-		var notify opc.Notify
+		var notify opc.Data
 		err := global.Redis.Get(global.Ctx, key).Scan(notify)
 		if err != nil {
 			continue
@@ -79,7 +79,7 @@ func (c *Handler) OnOpen(socket *gws.Conn) {
 func (c *Handler) OnClose(socket *gws.Conn, err error) {
 	if v, ok := global.Session.Load(socket); ok {
 		// global.OpcGateway.UnsubscribeOpc(v)
-		if notify, ok := v.(chan opc.Notify); ok {
+		if notify, ok := v.(chan opc.Data); ok {
 			close(notify)
 		}
 	}

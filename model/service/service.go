@@ -15,9 +15,9 @@ type ServiceModel struct {
 }
 
 func (s *ServiceModel) AfterCreate(tx *gorm.DB) (err error) {
-	err = global.OpcGateway.AddClinet(fmt.Sprintf("%d", s.ID), opc.OpcConfig{
+	err = global.OpcGateway.AddClinet(fmt.Sprintf("%d", s.ID), opc.OpcClient{
 		Endpoint: s.Opc,
-		Interval: 5 * time.Second,
+		Duration: time.Second * 60,
 	})
 	return
 }

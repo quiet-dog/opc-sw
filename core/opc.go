@@ -16,9 +16,9 @@ func InitOpc() {
 	log.Println("初始化opc")
 	for _, s := range service {
 		log.Println("遍历服务", s.Opc)
-		err := global.OpcGateway.AddClinet(fmt.Sprintf("%d", s.ID), opc.OpcConfig{
+		err := global.OpcGateway.AddClinet(fmt.Sprintf("%d", s.ID), opc.OpcClient{
 			Endpoint: s.Opc,
-			Interval: 60 * time.Second,
+			Duration: time.Second * 60,
 		})
 		if err != nil {
 			fmt.Println("连接OPC服务器失败" + s.Opc)
@@ -29,7 +29,10 @@ func InitOpc() {
 		var nodes []*node.NodeModel
 		global.DB.Where("service_id = ?", s.ID).Find(&nodes)
 		for _, n := range nodes {
-			err := global.OpcGateway.AddNode(fmt.Sprintf("%d", s.ID), n.NodeId)
+			err := global.OpcGateway.AddNode(fmt.Sprintf("%d", s.ID), opc.NodeId{
+				ID:   uint64(n.ID),
+				Node: n.NodeId,
+			})
 			if err != nil {
 				fmt.Println("添加节点失败" + n.NodeId)
 			}

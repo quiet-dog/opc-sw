@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 	"sw/global"
+	"sw/model/node"
 	"time"
 
 	"github.com/go-stomp/stomp/v3"
@@ -118,25 +119,27 @@ func InitSw() {
 								}
 
 								result := DeviceDTO{}
+								nodeModel := node.NodeModel{}
+								global.DB.Where("id = ?", msg.ID).First(&nodeModel)
 								// 以-切割字符串
 								// 获取 deviceType-xxx-equimentId-xxx-thresholdId-xxx-sensorName-xxx-value-xxx
-								if msg.Params != "" {
-									deviceTypeStart := strings.Index(msg.Params, "deviceType-") + len("deviceType-")
-									deviceTypeEnd := strings.Index(msg.Params[deviceTypeStart:], "-") + deviceTypeStart
+								if nodeModel.ID != 0 && nodeModel.Param != "" {
+									deviceTypeStart := strings.Index(nodeModel.Param, "deviceType-") + len("deviceType-")
+									deviceTypeEnd := strings.Index(nodeModel.Param[deviceTypeStart:], "-") + deviceTypeStart
 									// deviceType := str[deviceTypeStart:deviceTypeEnd]
 									if deviceTypeEnd > deviceTypeStart {
-										result.DeviceType = msg.Params[deviceTypeStart:deviceTypeEnd]
+										result.DeviceType = nodeModel.Param[deviceTypeStart:deviceTypeEnd]
 									}
 
 									environment := EnvironmentAlarmInfoDTO{}
-									environmentStart := strings.Index(msg.Params, "environmentId-") + len("environmentId-")
-									environmentEnd := strings.Index(msg.Params[environmentStart:], "-") + environmentStart
+									environmentStart := strings.Index(nodeModel.Param, "environmentId-") + len("environmentId-")
+									environmentEnd := strings.Index(nodeModel.Param[environmentStart:], "-") + environmentStart
 									if environmentEnd > environmentStart {
-										environmentIdStr := msg.Params[environmentStart:environmentEnd]
+										environmentIdStr := nodeModel.Param[environmentStart:environmentEnd]
 										str, err := strconv.ParseInt(environmentIdStr, 10, 64)
 										if err == nil {
 											environment.EnvironmentID = str
-											switch msg.Type {
+											switch msg.DataType {
 											case "float64":
 												{
 													environment.Value = msg.Value.(float64)
@@ -154,15 +157,15 @@ func InitSw() {
 									}
 
 									threhold := EquipmentInfoDTO{}
-									threholdStart := strings.Index(msg.Params, "thresholdId-") + len("thresholdId-")
-									threholdEnd := strings.Index(msg.Params[threholdStart:], "-") + threholdStart
+									threholdStart := strings.Index(nodeModel.Param, "thresholdId-") + len("thresholdId-")
+									threholdEnd := strings.Index(nodeModel.Param[threholdStart:], "-") + threholdStart
 									if threholdEnd > threholdStart {
-										thresholdIdStr := msg.Params[threholdStart:threholdEnd]
+										thresholdIdStr := nodeModel.Param[threholdStart:threholdEnd]
 										str, err := strconv.ParseInt(thresholdIdStr, 10, 64)
 										if err == nil {
 											threhold.ThresholdID = str
 										}
-										switch msg.Type {
+										switch msg.DataType {
 										case "float64":
 											{
 												threhold.Value = msg.Value.(float64)
@@ -178,10 +181,10 @@ func InitSw() {
 										}
 
 										threhold.Value = msg.Value.(float64)
-										equipmentStart := strings.Index(msg.Params, "equipment-") + len("equipment-")
-										equipmentEnd := strings.Index(msg.Params[equipmentStart:], "-") + equipmentStart
+										equipmentStart := strings.Index(nodeModel.Param, "equipment-") + len("equipment-")
+										equipmentEnd := strings.Index(nodeModel.Param[equipmentStart:], "-") + equipmentStart
 										if equipmentEnd > equipmentStart {
-											equipmentIdStr := msg.Params[equipmentStart:equipmentEnd]
+											equipmentIdStr := nodeModel.Param[equipmentStart:equipmentEnd]
 											str, err := strconv.ParseInt(equipmentIdStr, 10, 64)
 											if err == nil {
 												threhold.EquipmentID = str

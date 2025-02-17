@@ -23,13 +23,13 @@ func InitOpcCache() {
 					var node node.NodeModel
 					fmt.Println("存入缓存")
 
-					global.DB.Where("node_id = ?", msg.NodeId).First(&node)
-					msg.Params = node.Param
-					jsonByte, err := json.Marshal(msg)
+					global.DB.Where("id = ?", msg.ID).First(&node)
+					jsonByte, err := json.Marshal(node)
 					if err != nil {
 						continue
 					}
-					global.Redis.Set(global.Ctx, msg.NodeId, string(jsonByte), 0)
+					id := fmt.Sprintf("%d-%s", node.ServiceId, node.NodeId)
+					global.Redis.Set(global.Ctx, id, string(jsonByte), 0)
 				}
 			}
 		}
