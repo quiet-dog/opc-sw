@@ -45,9 +45,10 @@ func (o *OpcGateway) AddClinet(clientId string, config OpcClient) error {
 	c := &OpcClient{
 		Endpoint: config.Endpoint,
 		Duration: config.Duration,
+		gateway:  o.notify,
 	}
 
-	c.connect()
+	go c.connect()
 	o.opcs.Store(clientId, c)
 	return nil
 }

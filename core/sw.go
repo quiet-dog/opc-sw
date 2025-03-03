@@ -121,6 +121,7 @@ func InitSw() {
 								result := DeviceDTO{}
 								nodeModel := node.NodeModel{}
 								global.DB.Where("id = ?", msg.ID).First(&nodeModel)
+								fmt.Println("result.DeviceType", msg.ID)
 								// 以-切割字符串
 								// 获取 deviceType-xxx-equimentId-xxx-thresholdId-xxx-sensorName-xxx-value-xxx
 								if nodeModel.ID != 0 && nodeModel.Param != "" {

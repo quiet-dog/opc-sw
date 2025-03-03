@@ -25,7 +25,6 @@ func InitOpc() {
 			continue
 		}
 
-		fmt.Println("连接OPC服务器成功" + s.Opc)
 		var nodes []*node.NodeModel
 		global.DB.Where("service_id = ?", s.ID).Find(&nodes)
 		for _, n := range nodes {
@@ -36,6 +35,7 @@ func InitOpc() {
 			if err != nil {
 				fmt.Println("添加节点失败" + n.NodeId)
 			}
+			fmt.Println("添加节点成功" + n.NodeId)
 		}
 	}
 	log.Println("初始化opc完成")

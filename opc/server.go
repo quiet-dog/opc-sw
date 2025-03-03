@@ -75,23 +75,18 @@ func (o *OpcClient) connect() {
 		log.Fatal(err)
 	}
 	defer sub.Cancel(ctx)
-	// log.Printf("Created subscription with id %v", sub.SubscriptionID)
 
-	// id, err := ua.ParseNodeID(*nodeID)
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
+	id, err := ua.ParseNodeID("ns=2;i=3")
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	// var miCreateRequest *ua.MonitoredItemCreateRequest
-	// var eventFieldNames []string
+	miCreateRequest := o.valueRequest(id, 6)
+	sub.Monitor(ctx, ua.TimestampsToReturnBoth, miCreateRequest)
 
-	// miCreateRequest = valueRequest(id)
-	// res, err := sub.Monitor(ctx, ua.TimestampsToReturnBoth, miCreateRequest)
-	// if err != nil || res.Results[0].StatusCode != ua.StatusOK {
-	// 	log.Fatal(err)
-	// }
 	o.sub = sub
 
+	// go func() {
 	for {
 		select {
 		case <-ctx.Done():
@@ -134,19 +129,24 @@ func (o *OpcClient) connect() {
 			}
 		}
 	}
+	// }()
 }
 
 func (o *OpcClient) AddNodeID(n NodeId) error {
+	if o.sub == nil {
+		return fmt.Errorf("订阅未初始化，请先调用 Connect")
+	}
+
 	id, err := ua.ParseNodeID(n.Node)
 	if err != nil {
 		return err
 	}
-	var miCreateRequest *ua.MonitoredItemCreateRequest
 	// var eventFieldNames []string
 	// if isEvent {
 	// 	miCreateRequest, eventFieldNames = eventRequest(id)
 	// } else {
-	miCreateRequest = o.valueRequest(id, uint32(n.ID))
+	miCreateRequest := o.valueRequest(id, uint32(n.ID))
+	// 判断ctx是否关闭
 
 	// }
 	res, err := o.sub.Monitor(o.ctx, ua.TimestampsToReturnBoth, miCreateRequest)

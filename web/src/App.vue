@@ -2,7 +2,6 @@
 import { RouterView } from 'vue-router'
 import { NConfigProvider,NDialogProvider } from 'naive-ui'
 
-
 </script>
 
 <template>
