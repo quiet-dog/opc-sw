@@ -25,6 +25,7 @@ func InitOpc() {
 			continue
 		}
 
+		time.Sleep(5 * time.Second)
 		var nodes []*node.NodeModel
 		global.DB.Where("service_id = ?", s.ID).Find(&nodes)
 		for _, n := range nodes {

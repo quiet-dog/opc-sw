@@ -18,6 +18,7 @@ type OpcClient struct {
 	sub      *opcua.Subscription
 	ctx      context.Context
 	gateway  chan Data
+	nodes    []NodeId
 }
 
 type NodeId struct {
@@ -37,6 +38,7 @@ func (o *OpcClient) connect() {
 	ctx, cancel := context.WithTimeout(context.Background(), o.Duration)
 	defer cancel()
 
+	o.ctx = ctx
 	endpoints, err := opcua.GetEndpoints(ctx, o.Endpoint)
 	if err != nil {
 		panic(err)
@@ -76,22 +78,36 @@ func (o *OpcClient) connect() {
 	}
 	defer sub.Cancel(ctx)
 
-	id, err := ua.ParseNodeID("ns=2;i=3")
-	if err != nil {
-		log.Fatal(err)
+	mon := []*ua.MonitoredItemCreateRequest{}
+	for _, n := range o.nodes {
+		id, err := ua.ParseNodeID(n.Node)
+		if err != nil {
+			log.Fatal(err)
+			return
+		}
+		miCreateRequest := o.valueRequest(id, uint32(n.ID))
+		mon = append(mon, miCreateRequest)
 	}
+	sub.Monitor(ctx, ua.TimestampsToReturnBoth, mon...)
+	// id, err := ua.ParseNodeID("ns=2;i=3")
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
 
-	miCreateRequest := o.valueRequest(id, 6)
-	sub.Monitor(ctx, ua.TimestampsToReturnBoth, miCreateRequest)
+	// miCreateRequest := o.valueRequest(id, 6)
+	// sub.Monitor(ctx, ua.TimestampsToReturnBoth)
 
 	o.sub = sub
-
 	// go func() {
 	for {
 		select {
 		case <-ctx.Done():
-			fmt.Println("opc client connect done")
-			return
+			{
+				// 重新连接
+				o.connect()
+
+				return
+			}
 		case res := <-notifyCh:
 			if res.Error != nil {
 				log.Print(res.Error)
@@ -110,6 +126,7 @@ func (o *OpcClient) connect() {
 							Value:      item.Value.Value.Value(),
 							SourceTime: item.Value.SourceTimestamp,
 						}
+						fmt.Println("item.Value.Value.Type().String()", item.Value.Value.Type().String())
 						// 判断gateway是否关闭
 						o.gateway <- data
 					}
@@ -141,18 +158,17 @@ func (o *OpcClient) AddNodeID(n NodeId) error {
 	if err != nil {
 		return err
 	}
-	// var eventFieldNames []string
-	// if isEvent {
-	// 	miCreateRequest, eventFieldNames = eventRequest(id)
-	// } else {
 	miCreateRequest := o.valueRequest(id, uint32(n.ID))
 	// 判断ctx是否关闭
+	if o.ctx.Err() != nil {
+		return fmt.Errorf("context is done")
+	}
 
-	// }
 	res, err := o.sub.Monitor(o.ctx, ua.TimestampsToReturnBoth, miCreateRequest)
 	if err != nil || res.Results[0].StatusCode != ua.StatusOK {
 		return err
 	}
+	o.nodes = append(o.nodes, n)
 	log.Printf("Added new monitored item for NodeID: %s", n.Node)
 	return nil
 }

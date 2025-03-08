@@ -31,7 +31,7 @@ func (n *NodeModel) AfterCreate(tx *gorm.DB) error {
 
 func (n *NodeModel) AfterFind(tx *gorm.DB) error {
 	var notify opc.Data
-	b, err := global.Redis.Get(global.Ctx, n.NodeId).Result()
+	b, err := global.Redis.Get(global.Ctx, fmt.Sprintf("%d", n.ID)).Result()
 	if err != nil {
 		fmt.Println("获取redis错误", err.Error())
 		return nil
