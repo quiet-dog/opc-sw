@@ -65,7 +65,16 @@ export function useHomeHook() {
         const nodeId = ref("")
         const param = ref("")
         const description = ref("")
+        const extend = ref("")
         const serviceId = selectValue.value
+        const key = ref("")
+        const deviceType = ref("")
+        const deviceName = ref("")
+        const bmsDeviceName = ref("")
+        const bmsArea =ref("")
+        const bmsLabel = ref("")
+        const emsAare = ref("")
+
         dialog.create({
             title: "添加节点",
             content: () => {
@@ -84,13 +93,71 @@ export function useHomeHook() {
                             param.value = val
                         }
                     }),
+                    // h(NInput, {
+                    //     placeholder: "请输入扩展信息",
+                    //     modelValue: extend.value,
+                    //     "onUpdate:value": (val: string) => {
+                    //         extend.value = val
+                    //     }
+                    // }),
+                    // h(NInput, {
+                    //     placeholder: "请输入描述",
+                    //     modelValue: description.value,
+                    //     "onUpdate:value": (val: string) => {
+                    //         description.value = val
+                    //     }
+                    // })
                     h(NInput, {
-                        placeholder: "请输入描述",
-                        modelValue: description.value,
+                        placeholder: "请输入设备类型",
+                        modelValue: deviceType.value,
                         "onUpdate:value": (val: string) => {
-                            description.value = val
+                            deviceType.value = val
                         }
-                    })
+                    }),
+
+                    h(NInput, {
+                        placeholder: "请输入设备名称",
+                        modelValue: deviceName.value,
+                        "onUpdate:value": (val: string) => {
+                            deviceName.value = val
+                        }
+                    }),
+
+                    h(NInput, {
+                        placeholder: "请输入BMS设备名称",
+                        modelValue: bmsDeviceName.value,
+                        "onUpdate:value": (val: string) => {
+                            bmsDeviceName.value = val
+                        }
+                    }),
+                    h(NInput, {
+                        placeholder: "请输入BMS设备标签",
+                        modelValue: bmsLabel.value,
+                        "onUpdate:value": (val: string) => {
+                            bmsLabel.value = val
+                        }
+                    }),
+                    h(NInput, {
+                        placeholder: "请输入BMS区域",
+                        modelValue: bmsArea.value,
+                        "onUpdate:value": (val: string) => {
+                            bmsArea.value = val
+                        }
+                    }),
+                    h(NInput, {
+                        placeholder: "请输入EMS区域",
+                        modelValue: emsAare.value,
+                        "onUpdate:value": (val: string) => {
+                            emsAare.value = val
+                        }
+                    }),
+                    h(NInput, {
+                        placeholder: "请输入key",
+                        modelValue: key.value,
+                        "onUpdate:value": (val: string) => {
+                            key.value = val
+                        }
+                    }),
                 ])
             },
             positiveText: "确定",
@@ -99,7 +166,8 @@ export function useHomeHook() {
                     nodeId: nodeId.value,
                     param: param.value,
                     description: description.value,
-                    serviceId
+                    serviceId,
+                    extend: extend.value
                 })
                 getNodes()
             }

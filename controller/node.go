@@ -49,13 +49,13 @@ func GetNodeList(c *gin.Context) {
 		c.JSON(400, gin.H{"error": err.Error()})
 		return
 	}
+	var nodes []*node.NodeModel
 
 	if f.ServiceId == 0 {
-		c.JSON(200, []node.NodeModel{})
-		return
+		global.DB.Find(&nodes)
+	} else {
+		global.DB.Where("service_id = ?", f.ServiceId).Find(&nodes)
 	}
 
-	var nodes []*node.NodeModel
-	global.DB.Where("service_id = ?", f.ServiceId).Find(&nodes)
 	c.JSON(200, nodes)
 }

@@ -32,6 +32,10 @@ export function useOpcHook() {
             key: "time",
         },
         {
+            title: "扩展",
+            key: "extend",
+        },
+        {
             title: "操作",
             key: "action",
             render(row: any) {
