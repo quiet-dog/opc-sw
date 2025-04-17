@@ -239,6 +239,7 @@ func getResult(msg opc.Data) (map[string]interface{}, error) {
 	if 节点.DeviceType == "EMS" {
 		设备数据 := []map[string]interface{}{}
 		for _, 对应节点 := range 对应节点列表 {
+
 			var isExit bool
 			for i, v := range 设备数据 {
 				if v["区域"] == 对应节点.EmsAare {
@@ -249,7 +250,7 @@ func getResult(msg opc.Data) (map[string]interface{}, error) {
 			}
 			if !isExit {
 				父节点 := map[string]interface{}{}
-				父节点["区域"] = 对应节点.BmsArea
+				父节点["区域"] = 对应节点.EmsAare
 				父节点[对应节点.Key] = 对应节点.Value
 				设备数据 = append(设备数据, 父节点)
 			}
