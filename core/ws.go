@@ -261,7 +261,7 @@ func getResult(msg opc.Data) (map[string]interface{}, error) {
 	if 节点.DeviceType == "BMS" {
 		设备数据 := map[string]interface{}{}
 		for _, 对应节点 := range 对应节点列表 {
-			if 设备数据[对应节点.DeviceName] == nil {
+			if 设备数据[对应节点.BmsDeviceName] == nil {
 				设备列表 := []map[string]interface{}{}
 				设备信息 := map[string]interface{}{
 					"区域":   对应节点.BmsArea,
@@ -271,7 +271,7 @@ func getResult(msg opc.Data) (map[string]interface{}, error) {
 				设备列表 = append(设备列表, 设备信息)
 				设备数据[对应节点.DeviceName] = 设备列表
 			} else {
-				设备列表 := 设备数据[对应节点.DeviceName].([]map[string]interface{})
+				设备列表 := 设备数据[对应节点.BmsDeviceName].([]map[string]interface{})
 				for i, 设备 := range 设备列表 {
 					if 设备["区域"] == 对应节点.BmsArea {
 						设备列表[i][对应节点.Key] = 对应节点.Value
