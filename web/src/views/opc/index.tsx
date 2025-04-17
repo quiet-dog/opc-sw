@@ -28,6 +28,34 @@ export function useOpcHook() {
             key: "value",
         },
         {
+            title: "设备类型",
+            key: "deviceType",
+        },
+        {
+            title: "设备名称",
+            key: "deviceName",
+        },
+        {
+            title: "BMS设备名称",
+            key: "bmsDeviceName",
+        },
+        {
+            title: "BMS区域",
+            key: "bmsArea",
+        },
+        {
+            title: "BMS标签",
+            key: "bmsLabel",
+        },
+        {
+            title: "EMS区域",
+            key: "emsArea",
+        },
+        {
+            title: "对应key",
+            key: "key",
+        },
+        {
             title: "值时间",
             key: "time",
         },

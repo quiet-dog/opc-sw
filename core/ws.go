@@ -2,6 +2,7 @@ package core
 
 import (
 	"encoding/json"
+	"strings"
 	"sw/global"
 	"sw/model/node"
 	"sw/opc"
@@ -57,6 +58,22 @@ func (c *Handler) OnOpen(socket *gws.Conn) {
 	// 		}
 	// 	}
 	// }()
+
+	go func() {
+		var nodeModel []node.NodeModel
+		global.DB.Find(&nodeModel)
+		for _, v := range nodeModel {
+			notify := opc.Data{}
+			notify.ID = uint64(v.ID)
+
+			notify.DataType = v.NodeId
+			notify.SourceTime = time.Now()
+			if strings.Contains(v.Key, "状态") || strings.Contains(v.Key, "报警") || strings.Contains(v.Key, "开关") {
+				notify.Value = "1"
+				notify.Value = false
+			}
+		}
+	}()
 
 	go func() {
 		for {

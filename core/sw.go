@@ -123,10 +123,6 @@ func InitSw() {
 								global.DB.Where("id = ?", msg.ID).First(&nodeModel)
 								// 字符串切割
 								r := strings.Split(nodeModel.Param, "-")
-								// deviceType := ""
-								// environmentId := 0
-								// thresholdId := 0
-								// equipmentId := 0
 								if len(r) >= 4 {
 									for i := 0; i < len(r); i++ {
 										if r[i] == "deviceType" {
@@ -149,7 +145,7 @@ func InitSw() {
 								}
 
 								switch msg.DataType {
-								case "float64":
+								case "float64", "Float64":
 									{
 										if v, ok := msg.Value.(float64); ok {
 											if result.DeviceType == "设备档案" {
@@ -159,7 +155,7 @@ func InitSw() {
 											}
 										}
 									}
-								case "float32":
+								case "float32", "Float32":
 									{
 										if v, ok := msg.Value.(float32); ok {
 											if result.DeviceType == "设备档案" {
@@ -169,7 +165,7 @@ func InitSw() {
 											}
 										}
 									}
-								case "uint32":
+								case "uint32", "UInt32":
 									{
 										if v, ok := msg.Value.(uint32); ok {
 											if result.DeviceType == "设备档案" {
@@ -179,7 +175,7 @@ func InitSw() {
 											}
 										}
 									}
-								case "int32":
+								case "int32", "Int32":
 									{
 										if v, ok := msg.Value.(int32); ok {
 											if result.DeviceType == "设备档案" {
@@ -189,83 +185,77 @@ func InitSw() {
 											}
 										}
 									}
+								case "int64", "Int64":
+									{
+										if v, ok := msg.Value.(int64); ok {
+											if result.DeviceType == "设备档案" {
+												result.EquipmentInfo.Value = float64(v)
+											} else if result.DeviceType == "环境档案" {
+												result.EnvironmentAlarmInfo.Value = float64(v)
+											}
+										}
+									}
+								case "Float":
+									{
+										if v, ok := msg.Value.(float64); ok {
+											if result.DeviceType == "设备档案" {
+												result.EquipmentInfo.Value = v
+											} else if result.DeviceType == "环境档案" {
+												result.EnvironmentAlarmInfo.Value = v
+											}
+										}
+									}
+								case "UInt16", "uint16":
+									{
+										if v, ok := msg.Value.(uint16); ok {
+											if result.DeviceType == "设备档案" {
+												result.EquipmentInfo.Value = float64(v)
+											} else if result.DeviceType == "环境档案" {
+												result.EnvironmentAlarmInfo.Value = float64(v)
+											}
+										}
+									}
+								case "Int16", "int16":
+									{
+										if v, ok := msg.Value.(int16); ok {
+											if result.DeviceType == "设备档案" {
+												result.EquipmentInfo.Value = float64(v)
+											} else if result.DeviceType == "环境档案" {
+												result.EnvironmentAlarmInfo.Value = float64(v)
+											}
+										}
+									}
+								case "Int8", "int8":
+									{
+										if v, ok := msg.Value.(int8); ok {
+											if result.DeviceType == "设备档案" {
+												result.EquipmentInfo.Value = float64(v)
+											} else if result.DeviceType == "环境档案" {
+												result.EnvironmentAlarmInfo.Value = float64(v)
+											}
+										}
+									}
+								case "UInt8", "uint8":
+									{
+										if v, ok := msg.Value.(uint8); ok {
+											if result.DeviceType == "设备档案" {
+												result.EquipmentInfo.Value = float64(v)
+											} else if result.DeviceType == "环境档案" {
+												result.EnvironmentAlarmInfo.Value = float64(v)
+											}
+										}
+									}
+								case "UInt64", "uint64":
+									{
+										if v, ok := msg.Value.(uint64); ok {
+											if result.DeviceType == "设备档案" {
+												result.EquipmentInfo.Value = float64(v)
+											} else if result.DeviceType == "环境档案" {
+												result.EnvironmentAlarmInfo.Value = float64(v)
+											}
+										}
+									}
 								}
-
-								// 以-切割字符串
-								// 获取 deviceType-xxx-equimentId-xxx-thresholdId-xxx-sensorName-xxx-value-xxx
-								// if nodeModel.ID != 0 && nodeModel.Param != "" {
-								// 	deviceTypeStart := strings.Index(nodeModel.Param, "deviceType-") + len("deviceType-")
-								// 	deviceTypeEnd := strings.Index(nodeModel.Param[deviceTypeStart:], "-") + deviceTypeStart
-								// 	// deviceType := str[deviceTypeStart:deviceTypeEnd]
-								// 	if deviceTypeEnd > deviceTypeStart {
-								// 		result.DeviceType = nodeModel.Param[deviceTypeStart:deviceTypeEnd]
-								// 	}
-
-								// 	environment := EnvironmentAlarmInfoDTO{}
-								// 	environmentStart := strings.Index(nodeModel.Param, "environmentId-") + len("environmentId-")
-								// 	environmentEnd := strings.Index(nodeModel.Param[environmentStart:], "-") + environmentStart
-								// 	if environmentEnd > environmentStart {
-								// 		environmentIdStr := nodeModel.Param[environmentStart:environmentEnd]
-								// 		str, err := strconv.ParseInt(environmentIdStr, 10, 64)
-								// 		if err == nil {
-								// 			environment.EnvironmentID = str
-								// 			switch msg.DataType {
-								// 			case "float64":
-								// 				{
-								// 					environment.Value = msg.Value.(float64)
-								// 				}
-								// 			case "float32":
-								// 				{
-								// 					environment.Value = float64(msg.Value.(float32))
-								// 				}
-								// 			case "uint32":
-								// 				{
-								// 					environment.Value = float64(msg.Value.(uint32))
-								// 				}
-								// 			}
-								// 		}
-								// 	}
-
-								// 	threhold := EquipmentInfoDTO{}
-								// 	threholdStart := strings.Index(nodeModel.Param, "thresholdId-") + len("thresholdId-")
-								// 	threholdEnd := strings.Index(nodeModel.Param[threholdStart:], "-") + threholdStart
-
-								// 	if threholdEnd > threholdStart {
-								// 		thresholdIdStr := nodeModel.Param[threholdStart:threholdEnd]
-								// 		str, err := strconv.ParseInt(thresholdIdStr, 10, 64)
-								// 		if err == nil {
-								// 			threhold.ThresholdID = str
-								// 		}
-								// 		switch msg.DataType {
-								// 		case "float64":
-								// 			{
-								// 				threhold.Value = msg.Value.(float64)
-								// 			}
-								// 		case "float32":
-								// 			{
-								// 				threhold.Value = float64(msg.Value.(float32))
-								// 			}
-								// 		case "uint32":
-								// 			{
-								// 				threhold.Value = float64(msg.Value.(uint32))
-								// 			}
-								// 		}
-
-								// 		threhold.Value = msg.Value.(float64)
-								// 		equipmentStart := strings.Index(nodeModel.Param, "equipment-") + len("equipment-")
-								// 		equipmentEnd := strings.Index(nodeModel.Param[equipmentStart:], "-") + equipmentStart
-								// 		if equipmentEnd > equipmentStart {
-								// 			equipmentIdStr := nodeModel.Param[equipmentStart:equipmentEnd]
-								// 			str, err := strconv.ParseInt(equipmentIdStr, 10, 64)
-								// 			if err == nil {
-								// 				threhold.EquipmentID = str
-								// 			}
-								// 		}
-								// 	}
-								// 	result.EnvironmentAlarmInfo = environment
-								// 	result.EquipmentInfo = threhold
-
-								// }
 
 								fmt.Println("发送数据到后台==222=============", result)
 								jsonStr, err := json.Marshal(result)
