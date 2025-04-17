@@ -1,5 +1,5 @@
 sqlite:
-  path: /home/zks/Music/hw_opc.db
+  path: ./opc.db
 server:
   port: 8020
 sw:
