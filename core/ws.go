@@ -80,6 +80,7 @@ func (c *Handler) OnOpen(socket *gws.Conn) {
 		{
 			fmt.Println("=================")
 			var nodeModel []node.NodeModel
+			global.DB.Find(&nodeModel)
 			for _, v := range nodeModel {
 				notify := opc.Data{}
 				notify.ID = uint64(v.ID)
