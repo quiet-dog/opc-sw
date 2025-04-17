@@ -41,11 +41,13 @@ func (o *OpcClient) connect() {
 	o.ctx = ctx
 	endpoints, err := opcua.GetEndpoints(ctx, o.Endpoint)
 	if err != nil {
-		panic(err)
+		// panic(err)
+		return
 	}
 	ep, err := opcua.SelectEndpoint(endpoints, "", ua.MessageSecurityModeFromString(""))
 	if err != nil {
 		log.Fatal(err)
+		return
 	}
 	ep.EndpointURL = o.Endpoint
 
@@ -61,9 +63,11 @@ func (o *OpcClient) connect() {
 	c, err := opcua.NewClient(ep.EndpointURL, opts...)
 	if err != nil {
 		log.Fatal(err)
+		return
 	}
 	if err := c.Connect(ctx); err != nil {
 		log.Fatal(err)
+		return
 	}
 	defer c.Close(ctx)
 
@@ -75,6 +79,7 @@ func (o *OpcClient) connect() {
 	}, notifyCh)
 	if err != nil {
 		log.Fatal(err)
+		return
 	}
 	defer sub.Cancel(ctx)
 
