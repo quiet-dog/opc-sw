@@ -137,7 +137,7 @@ func (c *Handler) OnOpen(socket *gws.Conn) {
 				global.Redis.Set(global.Ctx, fmt.Sprintf("%d", v.ID), jsonByte, 0)
 			}
 			testchanel <- notify
-			time.Sleep(1 * time.Second)
+			time.Sleep(3 * time.Second)
 			// }
 		}
 	}()
