@@ -271,23 +271,24 @@ func getResult(msg opc.Data) (map[string]interface{}, error) {
 				})
 			}
 
-			// if 设备数据[对应节点.BmsDeviceName] == nil {
-			// 	设备列表 := []map[string]interface{}{}
-			// 	设备信息 := map[string]interface{}{
-			// 		"区域":   对应节点.BmsArea,
-			// 		"设备标签": 对应节点.BmsLabel,
-			// 	}
-			// 	设备信息[对应节点.Key] = 对应节点.Value
-			// 	设备列表 = append(设备列表, 设备信息)
-			// 	设备数据[对应节点.DeviceName] = 设备列表
-			// } else {
 			设备列表 := 设备数据[对应节点.BmsDeviceName].([]map[string]interface{})
+			var isExit bool
 			for i, 设备 := range 设备列表 {
 				if 设备["区域"] == 对应节点.BmsArea && 设备["设备标签"] == 对应节点.BmsLabel {
+					isExit = true
 					设备列表[i][对应节点.Key] = 对应节点.Value
 					break
 				}
 			}
+			if !isExit {
+				设备列表 = append(设备列表, map[string]interface{}{
+					"区域":     对应节点.BmsArea,
+					"设备标签":   对应节点.BmsLabel,
+					对应节点.Key: 对应节点.Value,
+				})
+				设备数据[对应节点.BmsDeviceName] = 设备列表
+			}
+
 			// }
 		}
 		for k, v := range 设备数据 {
