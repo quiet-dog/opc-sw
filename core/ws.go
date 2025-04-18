@@ -86,7 +86,7 @@ func (c *Handler) OnOpen(socket *gws.Conn) {
 				notify.ID = uint64(v.ID)
 				notify.DataType = v.NodeId
 				notify.SourceTime = time.Now()
-				if strings.Contains(v.Key, "状态") || strings.Contains(v.Key, "报警") || strings.Contains(v.Key, "开关") {
+				if strings.Contains(v.Key, "状态") || strings.Contains(v.Key, "报警") || strings.Contains(v.Key, "开关") || strings.Contains(v.Key, "失败") {
 					notify.Value = "1"
 					rand.Seed(time.Now().UnixNano()) // 设置随机种子
 					if rand.Intn(2) == 0 {
@@ -118,7 +118,7 @@ func (c *Handler) OnOpen(socket *gws.Conn) {
 			notify.ID = uint64(v.ID)
 			notify.DataType = v.NodeId
 			notify.SourceTime = time.Now()
-			if strings.Contains(v.Key, "状态") || strings.Contains(v.Key, "报警") || strings.Contains(v.Key, "开关") {
+			if strings.Contains(v.Key, "状态") || strings.Contains(v.Key, "报警") || strings.Contains(v.Key, "开关") || strings.Contains(v.Key, "失败") {
 				notify.Value = "1"
 				// 随机生成true或false
 				// 生成随机布尔值
