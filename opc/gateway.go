@@ -34,7 +34,20 @@ func New() *OpcGateway {
 					})
 					continue
 				}
-				return
+			default:
+				{
+					o.sub.Range(func(key, value interface{}) bool {
+						ch := key.(chan Data)
+						opcData := Data{
+							ID:         198,
+							DataType:   "Float",
+							Value:      12.0,
+							SourceTime: time.Now(),
+						}
+						ch <- opcData
+						return true
+					})
+				}
 			}
 		}
 	}()
