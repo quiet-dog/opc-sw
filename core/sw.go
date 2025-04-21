@@ -145,13 +145,22 @@ func InitSw() {
 								}
 
 								switch msg.DataType {
-								case "float64", "Float64":
+								case "float64", "Float64", "TypeIDFloat":
 									{
 										if v, ok := msg.Value.(float64); ok {
 											if result.DeviceType == "设备档案" {
 												result.EquipmentInfo.Value = v
 											} else if result.DeviceType == "环境档案" {
 												result.EnvironmentAlarmInfo.Value = v
+											}
+										} else {
+											v, ok := msg.Value.(float32)
+											if ok {
+												if result.DeviceType == "设备档案" {
+													result.EquipmentInfo.Value = float64(v)
+												} else if result.DeviceType == "环境档案" {
+													result.EnvironmentAlarmInfo.Value = float64(v)
+												}
 											}
 										}
 									}
