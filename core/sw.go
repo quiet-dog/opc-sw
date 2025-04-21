@@ -131,7 +131,6 @@ func InitSw() {
 											if id, err := strconv.Atoi(r[i+1]); err == nil {
 												result.EnvironmentAlarmInfo.EnvironmentID = int64(id)
 											}
-
 										} else if r[i] == "thresholdId" {
 											if id, err := strconv.Atoi(r[i+1]); err == nil {
 												result.EquipmentInfo.ThresholdID = int64(id)
