@@ -39,7 +39,7 @@ func InitOpc() {
 
 		err := global.OpcGateway.AddClinet(fmt.Sprintf("%d", s.ID), opc.OpcClient{
 			Endpoint: s.Opc,
-			Duration: time.Second * 60,
+			Duration: time.Second * 60000,
 			// Nodes: ,
 			Nodes: opcNodes,
 		})
@@ -48,7 +48,7 @@ func InitOpc() {
 			continue
 		}
 
-		time.Sleep(5 * time.Second)
+		// time.Sleep(5 * time.Second)
 
 	}
 	log.Println("初始化opc完成")
