@@ -34,7 +34,23 @@ func New() *OpcGateway {
 					})
 					continue
 				}
-				return
+				//return
+				// default:
+				// 	{
+				// 		o.sub.Range(func(key, value interface{}) bool {
+				// 			ch := key.(chan Data)
+				// 			opcData := Data{
+				// 				ID:         386,
+				// 				DataType:   "Float",
+				// 				Value:      12.0,
+				// 				SourceTime: time.Now(),
+				// 			}
+				// 			ch <- opcData
+				// 			return true
+				// 		})
+				// 		time.Sleep(3 * time.Second)
+				// 		continue
+				// 	}
 			}
 		}
 	}()
@@ -46,6 +62,7 @@ func (o *OpcGateway) AddClinet(clientId string, config OpcClient) error {
 		Endpoint: config.Endpoint,
 		Duration: config.Duration,
 		gateway:  o.notify,
+		Nodes:    config.Nodes,
 	}
 
 	go c.connect()

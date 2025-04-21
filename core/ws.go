@@ -2,8 +2,6 @@ package core
 
 import (
 	"encoding/json"
-	"fmt"
-	"strings"
 	"sw/global"
 	"sw/model/node"
 	"sw/opc"
@@ -74,73 +72,73 @@ func (c *Handler) OnOpen(socket *gws.Conn) {
 	// 		}
 	// 	}
 	// }()
-	testchanel := make(chan opc.Data)
+	// testchanel := make(chan opc.Data)
 
-	go func() {
-		{
-			fmt.Println("=================")
-			var nodeModel []node.NodeModel
-			global.DB.Find(&nodeModel)
-			for _, v := range nodeModel {
-				notify := opc.Data{}
-				notify.ID = uint64(v.ID)
-				notify.DataType = v.NodeId
-				notify.SourceTime = time.Now()
-				if strings.Contains(v.Key, "状态") || strings.Contains(v.Key, "报警") || strings.Contains(v.Key, "开关") || strings.Contains(v.Key, "失败") {
-					notify.Value = "1"
-					rand.Seed(time.Now().UnixNano()) // 设置随机种子
-					if rand.Intn(2) == 0 {
-						notify.Value = true
-					} else {
-						notify.Value = false
-					}
-					jsonByte, _ := json.Marshal(notify)
-					global.Redis.Set(global.Ctx, fmt.Sprintf("%d", v.ID), jsonByte, 0)
-				} else {
-					// 0-100的随机2位浮点数
-					rand.Seed(time.Now().UnixNano()) // 设置随机种子
-					// 生成 0 到 100 之间的随机 float64（保留两位小数）
-					num := float64(rand.Intn(10000)) / 100.0
-					notify.Value = num
-					jsonByte, _ := json.Marshal(notify)
-					global.Redis.Set(global.Ctx, fmt.Sprintf("%d", v.ID), jsonByte, 0)
-				}
-			}
-		}
-		for {
-			fmt.Println("=================")
-			randId := getCustomRandom()
-			var v node.NodeModel
-			global.DB.Where("id = ?", randId).Find(&v)
+	// go func() {
+	// 	{
+	// 		fmt.Println("=================")
+	// 		var nodeModel []node.NodeModel
+	// 		global.DB.Find(&nodeModel)
+	// 		for _, v := range nodeModel {
+	// 			notify := opc.Data{}
+	// 			notify.ID = uint64(v.ID)
+	// 			notify.DataType = v.NodeId
+	// 			notify.SourceTime = time.Now()
+	// 			if strings.Contains(v.Key, "状态") || strings.Contains(v.Key, "报警") || strings.Contains(v.Key, "开关") || strings.Contains(v.Key, "失败") {
+	// 				notify.Value = "1"
+	// 				rand.Seed(time.Now().UnixNano()) // 设置随机种子
+	// 				if rand.Intn(2) == 0 {
+	// 					notify.Value = true
+	// 				} else {
+	// 					notify.Value = false
+	// 				}
+	// 				jsonByte, _ := json.Marshal(notify)
+	// 				global.Redis.Set(global.Ctx, fmt.Sprintf("%d", v.ID), jsonByte, 0)
+	// 			} else {
+	// 				// 0-100的随机2位浮点数
+	// 				rand.Seed(time.Now().UnixNano()) // 设置随机种子
+	// 				// 生成 0 到 100 之间的随机 float64（保留两位小数）
+	// 				num := float64(rand.Intn(10000)) / 100.0
+	// 				notify.Value = num
+	// 				jsonByte, _ := json.Marshal(notify)
+	// 				global.Redis.Set(global.Ctx, fmt.Sprintf("%d", v.ID), jsonByte, 0)
+	// 			}
+	// 		}
+	// 	}
+	// 	for {
+	// 		fmt.Println("=================")
+	// 		randId := getCustomRandom()
+	// 		var v node.NodeModel
+	// 		global.DB.Where("id = ?", randId).Find(&v)
 
-			// for _, v := range nodeModel {
-			notify := opc.Data{}
-			notify.ID = uint64(v.ID)
-			notify.DataType = v.NodeId
-			notify.SourceTime = time.Now()
-			if strings.Contains(v.Key, "状态") || strings.Contains(v.Key, "报警") || strings.Contains(v.Key, "开关") || strings.Contains(v.Key, "失败") {
-				notify.Value = "1"
-				// 随机生成true或false
-				// 生成随机布尔值
+	// 		// for _, v := range nodeModel {
+	// 		notify := opc.Data{}
+	// 		notify.ID = uint64(v.ID)
+	// 		notify.DataType = v.NodeId
+	// 		notify.SourceTime = time.Now()
+	// 		if strings.Contains(v.Key, "状态") || strings.Contains(v.Key, "报警") || strings.Contains(v.Key, "开关") || strings.Contains(v.Key, "失败") {
+	// 			notify.Value = "1"
+	// 			// 随机生成true或false
+	// 			// 生成随机布尔值
 
-				rand.Seed(time.Now().UnixNano()) // 设置随机种子
-				notify.Value = rand.Intn(2) == 1 // 生成 0 或 1，判断是否为 1
-				jsonByte, _ := json.Marshal(notify)
-				global.Redis.Set(global.Ctx, fmt.Sprintf("%d", v.ID), jsonByte, 0)
-			} else {
-				// 0-100的随机2位浮点数
-				rand.Seed(time.Now().UnixNano()) // 设置随机种子
-				// 生成 0 到 100 之间的随机 float64（保留两位小数）
-				num := float64(rand.Intn(10000)) / 100.0
-				notify.Value = num
-				jsonByte, _ := json.Marshal(notify)
-				global.Redis.Set(global.Ctx, fmt.Sprintf("%d", v.ID), jsonByte, 0)
-			}
-			testchanel <- notify
-			time.Sleep(3 * time.Second)
-			// }
-		}
-	}()
+	// 			rand.Seed(time.Now().UnixNano()) // 设置随机种子
+	// 			notify.Value = rand.Intn(2) == 1 // 生成 0 或 1，判断是否为 1
+	// 			jsonByte, _ := json.Marshal(notify)
+	// 			global.Redis.Set(global.Ctx, fmt.Sprintf("%d", v.ID), jsonByte, 0)
+	// 		} else {
+	// 			// 0-100的随机2位浮点数
+	// 			rand.Seed(time.Now().UnixNano()) // 设置随机种子
+	// 			// 生成 0 到 100 之间的随机 float64（保留两位小数）
+	// 			num := float64(rand.Intn(10000)) / 100.0
+	// 			notify.Value = num
+	// 			jsonByte, _ := json.Marshal(notify)
+	// 			global.Redis.Set(global.Ctx, fmt.Sprintf("%d", v.ID), jsonByte, 0)
+	// 		}
+	// 		testchanel <- notify
+	// 		time.Sleep(3 * time.Second)
+	// 		// }
+	// 	}
+	// }()
 
 	go func() {
 		for {
@@ -161,21 +159,21 @@ func (c *Handler) OnOpen(socket *gws.Conn) {
 					}
 					socket.WriteMessage(gws.OpcodeText, b)
 				}
-			case msg, ok := <-testchanel:
-				{
-					if !ok {
-						return
-					}
-					result, err := getResult(msg)
-					if err != nil {
-						continue
-					}
-					b, err := json.Marshal(result)
-					if err != nil {
-						continue
-					}
-					socket.WriteMessage(gws.OpcodeText, b)
-				}
+				// case msg, ok := <-testchanel:
+				// 	{
+				// 		if !ok {
+				// 			return
+				// 		}
+				// 		result, err := getResult(msg)
+				// 		if err != nil {
+				// 			continue
+				// 		}
+				// 		b, err := json.Marshal(result)
+				// 		if err != nil {
+				// 			continue
+				// 		}
+				// 		socket.WriteMessage(gws.OpcodeText, b)
+				// 	}
 			}
 		}
 	}()

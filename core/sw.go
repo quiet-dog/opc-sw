@@ -51,6 +51,7 @@ type DeviceDTO struct {
 	DeviceID             int64                   `json:"deviceId"`             // 设备ID
 	EnvironmentAlarmInfo EnvironmentAlarmInfoDTO `json:"environmentAlarmInfo"` // 环境档案数据信息
 	EquipmentInfo        EquipmentInfoDTO        `json:"equipmentInfo"`        // 设备信息
+	DateSource           string                  `json:"dateSource"`           // 数据来源
 }
 
 // EnvironmentAlarmInfoDTO represents environment alarm information
@@ -256,7 +257,7 @@ func InitSw() {
 										}
 									}
 								}
-
+								result.DateSource = msg.SourceTime.Format("2006-01-02 15:04:05")
 								fmt.Println("发送数据到后台==222=============", result)
 								jsonStr, err := json.Marshal(result)
 								if err != nil {

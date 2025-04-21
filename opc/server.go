@@ -18,7 +18,7 @@ type OpcClient struct {
 	sub      *opcua.Subscription
 	ctx      context.Context
 	gateway  chan Data
-	nodes    []NodeId
+	Nodes    []NodeId
 }
 
 type NodeId struct {
@@ -44,7 +44,7 @@ func (o *OpcClient) connect() {
 		// panic(err)
 		return
 	}
-	ep, err := opcua.SelectEndpoint(endpoints, "", ua.MessageSecurityModeFromString(""))
+	ep, err := opcua.SelectEndpoint(endpoints, ua.SecurityPolicyURINone, ua.MessageSecurityModeNone)
 	if err != nil {
 		log.Fatal(err)
 		return
@@ -52,12 +52,18 @@ func (o *OpcClient) connect() {
 	ep.EndpointURL = o.Endpoint
 
 	opts := []opcua.Option{
-		opcua.SecurityPolicy(""),
-		opcua.SecurityModeString(""),
+		// opcua.SecurityPolicy(""),
+		// opcua.SecurityModeString(""),
+		// opcua.CertificateFile(""),
+		// opcua.PrivateKeyFile(""),
+		// opcua.AuthAnonymous(),
+		// opcua.SecurityFromEndpoint(ep, ua.UserTokenTypeAnonymous),
+		opcua.SecurityPolicy("None"),                   // 设置为无安全策略
+		opcua.SecurityMode(ua.MessageSecurityModeNone), // 设置为无消息安全模式
 		opcua.CertificateFile(""),
 		opcua.PrivateKeyFile(""),
-		opcua.AuthAnonymous(),
-		opcua.SecurityFromEndpoint(ep, ua.UserTokenTypeAnonymous),
+		opcua.AuthAnonymous(),                                     // 匿名认证
+		opcua.SecurityFromEndpoint(ep, ua.UserTokenTypeAnonymous), // 从 endpoint 自动提取安
 	}
 
 	c, err := opcua.NewClient(ep.EndpointURL, opts...)
@@ -69,9 +75,32 @@ func (o *OpcClient) connect() {
 		log.Fatal(err)
 		return
 	}
+	fmt.Printf("连接成功%s\n", o.Endpoint)
 	defer c.Close(ctx)
 
 	o.client = c
+
+	// 先从opc服务器获取所有节点
+	rootNode := ua.NewNumericNodeID(0, id.ObjectsFolder)
+	nodeIDs := browseNodes(ctx, o.client, rootNode)
+	exitIds := []NodeId{}
+	nodeExitIds := []string{}
+	for _, n := range o.Nodes {
+		var isExit bool
+		for _, id := range nodeIDs {
+			fmt.Println("节点", id.String())
+			if n.Node == id.String() {
+				isExit = true
+				exitIds = append(exitIds, n)
+				break
+			}
+		}
+		if !isExit {
+			nodeExitIds = append(nodeExitIds, n.Node)
+		}
+	}
+	fmt.Println("不存在的nodeId", nodeExitIds)
+	o.Nodes = exitIds
 	notifyCh := make(chan *opcua.PublishNotificationData)
 
 	sub, err := c.Subscribe(ctx, &opcua.SubscriptionParameters{
@@ -84,16 +113,29 @@ func (o *OpcClient) connect() {
 	defer sub.Cancel(ctx)
 
 	mon := []*ua.MonitoredItemCreateRequest{}
-	for _, n := range o.nodes {
+	for _, n := range o.Nodes {
 		id, err := ua.ParseNodeID(n.Node)
 		if err != nil {
-			log.Fatal(err)
+			log.Fatal("解析id失败", err)
 			return
 		}
 		miCreateRequest := o.valueRequest(id, uint32(n.ID))
 		mon = append(mon, miCreateRequest)
 	}
-	sub.Monitor(ctx, ua.TimestampsToReturnBoth, mon...)
+	fmt.Println("订阅节点", len(mon))
+	r, err := sub.Monitor(ctx, ua.TimestampsToReturnBoth, mon...)
+	if err != nil {
+		fmt.Println("订阅失败", err)
+		return
+	}
+	if r != nil && len(r.Results) > 0 {
+		for _, res := range r.Results {
+			if res.StatusCode != ua.StatusOK {
+				fmt.Println("订阅失败", res.StatusCode)
+				return
+			}
+		}
+	}
 	// id, err := ua.ParseNodeID("ns=2;i=3")
 	// if err != nil {
 	// 	log.Fatal(err)
@@ -109,11 +151,12 @@ func (o *OpcClient) connect() {
 		case <-ctx.Done():
 			{
 				// 重新连接
+				fmt.Println("重新连接", o.Endpoint)
 				o.connect()
-
 				return
 			}
 		case res := <-notifyCh:
+			fmt.Printf("Received publish notification: %v\n", res)
 			if res.Error != nil {
 				log.Print(res.Error)
 				continue
@@ -154,6 +197,48 @@ func (o *OpcClient) connect() {
 	// }()
 }
 
+// browseNodes 递归浏览节点并收集 NodeID
+func browseNodes(ctx context.Context, client *opcua.Client, nodeID *ua.NodeID) []*ua.NodeID {
+	var nodeIDs []*ua.NodeID
+
+	// 添加当前 NodeID
+	nodeIDs = append(nodeIDs, nodeID)
+
+	// 创建 Browse 请求
+	req := &ua.BrowseRequest{
+		NodesToBrowse: []*ua.BrowseDescription{
+			{
+				NodeID:          nodeID,
+				BrowseDirection: ua.BrowseDirectionForward,
+				ReferenceTypeID: ua.NewNumericNodeID(0, id.HierarchicalReferences),
+				IncludeSubtypes: true,
+				NodeClassMask:   uint32(ua.NodeClassAll),
+				ResultMask:      uint32(ua.BrowseResultMaskAll),
+			},
+		},
+	}
+
+	// 执行 Browse 操作
+	resp, err := client.Browse(ctx, req)
+	if err != nil {
+		log.Printf("Failed to browse node %s: %v", nodeID, err)
+		return nodeIDs
+	}
+
+	// 处理 Browse 结果
+	for _, result := range resp.Results {
+		for _, ref := range result.References {
+			// 获取子节点的 NodeID
+			childNodeID := ref.NodeID.NodeID
+			// 递归浏览子节点
+			childNodeIDs := browseNodes(ctx, client, childNodeID)
+			nodeIDs = append(nodeIDs, childNodeIDs...)
+		}
+	}
+
+	return nodeIDs
+}
+
 func (o *OpcClient) AddNodeID(n NodeId) error {
 	if o.sub == nil {
 		return fmt.Errorf("订阅未初始化，请先调用 Connect")
@@ -173,7 +258,7 @@ func (o *OpcClient) AddNodeID(n NodeId) error {
 	if err != nil || res.Results[0].StatusCode != ua.StatusOK {
 		return err
 	}
-	o.nodes = append(o.nodes, n)
+	o.Nodes = append(o.Nodes, n)
 	log.Printf("Added new monitored item for NodeID: %s", n.Node)
 	return nil
 }
