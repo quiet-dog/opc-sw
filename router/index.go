@@ -18,5 +18,8 @@ func InitRouter() *gin.Engine {
 	a.POST("/service", controller.CreateService)
 	a.POST("/service/update", controller.UpdateService)
 	a.POST("/service/delete", controller.DeleteService)
+
+	a.POST("/recDataApi", controller.RecDataApi)
+	a.POST("/recYuZhiApi", controller.RecYuZhiApi)
 	return r
 }

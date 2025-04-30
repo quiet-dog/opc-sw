@@ -159,21 +159,33 @@ func (c *Handler) OnOpen(socket *gws.Conn) {
 					}
 					socket.WriteMessage(gws.OpcodeText, b)
 				}
-				// case msg, ok := <-testchanel:
-				// 	{
-				// 		if !ok {
-				// 			return
-				// 		}
-				// 		result, err := getResult(msg)
-				// 		if err != nil {
-				// 			continue
-				// 		}
-				// 		b, err := json.Marshal(result)
-				// 		if err != nil {
-				// 			continue
-				// 		}
-				// 		socket.WriteMessage(gws.OpcodeText, b)
-				// 	}
+			case msg, ok := <-global.RecChanel:
+				{
+					if !ok {
+						return
+					}
+
+					if msg.Type == global.DEVICEDATA {
+						if v, ok := msg.Data.(opc.Data); ok {
+							result, err := getResult(v)
+							if err != nil {
+								continue
+							}
+							b, err := json.Marshal(result)
+							if err != nil {
+								continue
+							}
+							socket.WriteMessage(gws.OpcodeText, b)
+						}
+
+					}
+					jsonB, err := json.Marshal(msg)
+					if err != nil {
+						continue
+					}
+					// 发送数据
+					socket.WriteMessage(gws.OpcodeText, jsonB)
+				}
 			}
 		}
 	}()
