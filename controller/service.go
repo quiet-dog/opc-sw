@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"os/exec"
 	"sw/global"
 	"sw/model/service"
 
@@ -43,4 +44,18 @@ func GetServiceList(c *gin.Context) {
 	var services []*service.ServiceModel
 	global.DB.Find(&services)
 	c.JSON(200, services)
+}
+
+func RestSys(c *gin.Context) {
+	// 调用命令行  systemctl restart opc
+
+	// 是linux
+	cmd := exec.Command("systemctl", "restart", "opc")
+	err := cmd.Run()
+	if err != nil {
+		c.JSON(500, gin.H{"error": "重启服务失败"})
+		return
+	}
+	c.JSON(200, gin.H{"message": "重启服务成功"})
+
 }

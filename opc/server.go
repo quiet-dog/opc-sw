@@ -2,8 +2,10 @@ package opc
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
+	"os"
 	"time"
 
 	"github.com/gopcua/opcua"
@@ -19,6 +21,8 @@ type OpcClient struct {
 	ctx      context.Context
 	gateway  chan Data
 	Nodes    []NodeId
+	Username string
+	Password string
 }
 
 type NodeId struct {
@@ -33,6 +37,14 @@ type Data struct {
 	SourceTime time.Time
 	Param      string
 }
+
+type TreeNode struct {
+	NodeID     *ua.NodeID  `json:"nodeId"`
+	BrowseName string      `json:"browseName"`
+	Children   []*TreeNode `json:"children"`
+}
+
+var a = 0
 
 func (o *OpcClient) connect() {
 	ctx, cancel := context.WithTimeout(context.Background(), o.Duration)
@@ -52,18 +64,18 @@ func (o *OpcClient) connect() {
 	ep.EndpointURL = o.Endpoint
 
 	opts := []opcua.Option{
-		// opcua.SecurityPolicy(""),
-		// opcua.SecurityModeString(""),
-		// opcua.CertificateFile(""),
-		// opcua.PrivateKeyFile(""),
-		// opcua.AuthAnonymous(),
-		// opcua.SecurityFromEndpoint(ep, ua.UserTokenTypeAnonymous),
 		opcua.SecurityPolicy("None"),                   // 设置为无安全策略
 		opcua.SecurityMode(ua.MessageSecurityModeNone), // 设置为无消息安全模式
 		opcua.CertificateFile(""),
 		opcua.PrivateKeyFile(""),
-		opcua.AuthAnonymous(),                                     // 匿名认证
-		opcua.SecurityFromEndpoint(ep, ua.UserTokenTypeAnonymous), // 从 endpoint 自动提取安
+		// opcua.SecurityFromEndpoint(ep, ua.UserTokenTypeAnonymous), // 从 endpoint 自动提取安
+	}
+
+	if o.Username != "" && o.Password != "" {
+		fmt.Println("使用用户名密码连接", o.Username, o.Password, o.Endpoint)
+		opts = append(opts, opcua.AuthUsername(o.Username, o.Password), opcua.SecurityFromEndpoint(ep, ua.UserTokenTypeUserName))
+	} else {
+		opts = append(opts, opcua.AuthAnonymous(), opcua.SecurityFromEndpoint(ep, ua.UserTokenTypeAnonymous))
 	}
 
 	c, err := opcua.NewClient(ep.EndpointURL, opts...)
@@ -82,14 +94,31 @@ func (o *OpcClient) connect() {
 
 	// 先从opc服务器获取所有节点
 	rootNode := ua.NewNumericNodeID(0, id.ObjectsFolder)
-	nodeIDs := browseNodes(ctx, o.client, rootNode)
+	nodeIDs := browseNodeTree(ctx, o.client, rootNode)
+	// 写入json文件
+	f, err := os.OpenFile("/www/opc/"+fmt.Sprintf("%d", a)+".json", os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0666)
+	a++
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
+	defer f.Close()
+	jsonData, err := json.Marshal(nodeIDs)
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
+	f.Write(jsonData)
+
 	exitIds := []NodeId{}
 	nodeExitIds := []string{}
+	treeNodeIDs := flattenTreeNodeIDs(nodeIDs)
+
 	for _, n := range o.Nodes {
 		var isExit bool
-		for _, id := range nodeIDs {
-			fmt.Println("节点", id.String())
-			if n.Node == id.String() {
+		for _, id := range treeNodeIDs {
+			fmt.Println("节点", id)
+			if n.Node == id {
 				isExit = true
 				exitIds = append(exitIds, n)
 				break
@@ -210,11 +239,52 @@ func (o *OpcClient) connect() {
 }
 
 // browseNodes 递归浏览节点并收集 NodeID
-func browseNodes(ctx context.Context, client *opcua.Client, nodeID *ua.NodeID) []*ua.NodeID {
-	var nodeIDs []*ua.NodeID
+// func browseNodes(ctx context.Context, client *opcua.Client, nodeID *ua.NodeID) []*ua.NodeID {
+// 	var nodeIDs []*ua.NodeID
 
-	// 添加当前 NodeID
-	nodeIDs = append(nodeIDs, nodeID)
+// 	// 添加当前 NodeID
+// 	nodeIDs = append(nodeIDs, nodeID)
+
+// 	// 创建 Browse 请求
+// 	req := &ua.BrowseRequest{
+// 		NodesToBrowse: []*ua.BrowseDescription{
+// 			{
+// 				NodeID:          nodeID,
+// 				BrowseDirection: ua.BrowseDirectionForward,
+// 				ReferenceTypeID: ua.NewNumericNodeID(0, id.HierarchicalReferences),
+// 				IncludeSubtypes: true,
+// 				NodeClassMask:   uint32(ua.NodeClassAll),
+// 				ResultMask:      uint32(ua.BrowseResultMaskAll),
+// 			},
+// 		},
+// 	}
+
+// 	// 执行 Browse 操作
+// 	resp, err := client.Browse(ctx, req)
+// 	if err != nil {
+// 		log.Printf("Failed to browse node %s: %v", nodeID, err)
+// 		return nodeIDs
+// 	}
+
+// 	// 处理 Browse 结果
+// 	for _, result := range resp.Results {
+// 		for _, ref := range result.References {
+// 			// 获取子节点的 NodeID
+// 			childNodeID := ref.NodeID.NodeID
+// 			// 递归浏览子节点
+// 			childNodeIDs := browseNodes(ctx, client, childNodeID)
+// 			nodeIDs = append(nodeIDs, childNodeIDs...)
+// 		}
+// 	}
+
+// 	return nodeIDs
+// }
+
+func browseNodeTree(ctx context.Context, client *opcua.Client, nodeID *ua.NodeID) *TreeNode {
+	// 创建当前节点对象
+	node := &TreeNode{
+		NodeID: nodeID,
+	}
 
 	// 创建 Browse 请求
 	req := &ua.BrowseRequest{
@@ -234,21 +304,35 @@ func browseNodes(ctx context.Context, client *opcua.Client, nodeID *ua.NodeID) [
 	resp, err := client.Browse(ctx, req)
 	if err != nil {
 		log.Printf("Failed to browse node %s: %v", nodeID, err)
-		return nodeIDs
+		return node
 	}
 
-	// 处理 Browse 结果
+	// 递归构建子树
 	for _, result := range resp.Results {
 		for _, ref := range result.References {
-			// 获取子节点的 NodeID
-			childNodeID := ref.NodeID.NodeID
-			// 递归浏览子节点
-			childNodeIDs := browseNodes(ctx, client, childNodeID)
-			nodeIDs = append(nodeIDs, childNodeIDs...)
+			child := browseNodeTree(ctx, client, ref.NodeID.NodeID)
+			child.BrowseName = ref.BrowseName.Name
+			node.Children = append(node.Children, child)
 		}
 	}
 
-	return nodeIDs
+	return node
+}
+
+func flattenTreeNodeIDs(node *TreeNode) []string {
+	var ids []string
+	var walk func(n *TreeNode)
+	walk = func(n *TreeNode) {
+		if n == nil || n.NodeID == nil {
+			return
+		}
+		ids = append(ids, n.NodeID.String())
+		for _, child := range n.Children {
+			walk(child)
+		}
+	}
+	walk(node)
+	return ids
 }
 
 func (o *OpcClient) AddNodeID(n NodeId) error {

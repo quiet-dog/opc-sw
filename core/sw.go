@@ -144,127 +144,141 @@ func InitSw() {
 									}
 								}
 
-								switch msg.DataType {
-								case "float64", "Float64", "TypeIDFloat":
-									{
-										if v, ok := msg.Value.(float64); ok {
-											if result.DeviceType == "设备档案" {
-												result.EquipmentInfo.Value = v
-											} else if result.DeviceType == "环境档案" {
-												result.EnvironmentAlarmInfo.Value = v
-											}
-										} else {
-											v, ok := msg.Value.(float32)
-											if ok {
-												if result.DeviceType == "设备档案" {
-													result.EquipmentInfo.Value = float64(v)
-												} else if result.DeviceType == "环境档案" {
-													result.EnvironmentAlarmInfo.Value = float64(v)
-												}
-											}
-										}
+								if v, ok := msg.Value.(float64); ok {
+									if result.DeviceType == "设备档案" {
+										result.EquipmentInfo.Value = v
+									} else if result.DeviceType == "环境档案" {
+										result.EnvironmentAlarmInfo.Value = v
 									}
-								case "float32", "Float32":
-									{
-										if v, ok := msg.Value.(float32); ok {
-											if result.DeviceType == "设备档案" {
-												result.EquipmentInfo.Value = float64(v)
-											} else if result.DeviceType == "环境档案" {
-												result.EnvironmentAlarmInfo.Value = float64(v)
-											}
-										}
-									}
-								case "uint32", "UInt32":
-									{
-										if v, ok := msg.Value.(uint32); ok {
-											if result.DeviceType == "设备档案" {
-												result.EquipmentInfo.Value = float64(v)
-											} else if result.DeviceType == "环境档案" {
-												result.EnvironmentAlarmInfo.Value = float64(v)
-											}
-										}
-									}
-								case "int32", "Int32":
-									{
-										if v, ok := msg.Value.(int32); ok {
-											if result.DeviceType == "设备档案" {
-												result.EquipmentInfo.Value = float64(v)
-											} else if result.DeviceType == "环境档案" {
-												result.EnvironmentAlarmInfo.Value = float64(v)
-											}
-										}
-									}
-								case "int64", "Int64":
-									{
-										if v, ok := msg.Value.(int64); ok {
-											if result.DeviceType == "设备档案" {
-												result.EquipmentInfo.Value = float64(v)
-											} else if result.DeviceType == "环境档案" {
-												result.EnvironmentAlarmInfo.Value = float64(v)
-											}
-										}
-									}
-								case "Float":
-									{
-										if v, ok := msg.Value.(float64); ok {
-											if result.DeviceType == "设备档案" {
-												result.EquipmentInfo.Value = v
-											} else if result.DeviceType == "环境档案" {
-												result.EnvironmentAlarmInfo.Value = v
-											}
-										}
-									}
-								case "UInt16", "uint16":
-									{
-										if v, ok := msg.Value.(uint16); ok {
-											if result.DeviceType == "设备档案" {
-												result.EquipmentInfo.Value = float64(v)
-											} else if result.DeviceType == "环境档案" {
-												result.EnvironmentAlarmInfo.Value = float64(v)
-											}
-										}
-									}
-								case "Int16", "int16":
-									{
-										if v, ok := msg.Value.(int16); ok {
-											if result.DeviceType == "设备档案" {
-												result.EquipmentInfo.Value = float64(v)
-											} else if result.DeviceType == "环境档案" {
-												result.EnvironmentAlarmInfo.Value = float64(v)
-											}
-										}
-									}
-								case "Int8", "int8":
-									{
-										if v, ok := msg.Value.(int8); ok {
-											if result.DeviceType == "设备档案" {
-												result.EquipmentInfo.Value = float64(v)
-											} else if result.DeviceType == "环境档案" {
-												result.EnvironmentAlarmInfo.Value = float64(v)
-											}
-										}
-									}
-								case "UInt8", "uint8":
-									{
-										if v, ok := msg.Value.(uint8); ok {
-											if result.DeviceType == "设备档案" {
-												result.EquipmentInfo.Value = float64(v)
-											} else if result.DeviceType == "环境档案" {
-												result.EnvironmentAlarmInfo.Value = float64(v)
-											}
-										}
-									}
-								case "UInt64", "uint64":
-									{
-										if v, ok := msg.Value.(uint64); ok {
-											if result.DeviceType == "设备档案" {
-												result.EquipmentInfo.Value = float64(v)
-											} else if result.DeviceType == "环境档案" {
-												result.EnvironmentAlarmInfo.Value = float64(v)
-											}
-										}
+								} else if v, ok := msg.Value.(float32); ok {
+									if result.DeviceType == "设备档案" {
+										result.EquipmentInfo.Value = float64(v)
+									} else if result.DeviceType == "环境档案" {
+										result.EnvironmentAlarmInfo.Value = float64(v)
 									}
 								}
+
+								// switch msg.DataType {
+								// case "float64", "Float64", "TypeIDFloat":
+								// 	{
+								// 		if v, ok := msg.Value.(float64); ok {
+								// 			if result.DeviceType == "设备档案" {
+								// 				result.EquipmentInfo.Value = v
+								// 			} else if result.DeviceType == "环境档案" {
+								// 				result.EnvironmentAlarmInfo.Value = v
+								// 			}
+								// 		} else {
+								// 			v, ok := msg.Value.(float32)
+								// 			if ok {
+								// 				if result.DeviceType == "设备档案" {
+								// 					result.EquipmentInfo.Value = float64(v)
+								// 				} else if result.DeviceType == "环境档案" {
+								// 					result.EnvironmentAlarmInfo.Value = float64(v)
+								// 				}
+								// 			}
+								// 		}
+								// 	}
+								// case "float32", "Float32":
+								// 	{
+								// 		if v, ok := msg.Value.(float32); ok {
+								// 			if result.DeviceType == "设备档案" {
+								// 				result.EquipmentInfo.Value = float64(v)
+								// 			} else if result.DeviceType == "环境档案" {
+								// 				result.EnvironmentAlarmInfo.Value = float64(v)
+								// 			}
+								// 		}
+								// 	}
+								// case "uint32", "UInt32":
+								// 	{
+								// 		if v, ok := msg.Value.(uint32); ok {
+								// 			if result.DeviceType == "设备档案" {
+								// 				result.EquipmentInfo.Value = float64(v)
+								// 			} else if result.DeviceType == "环境档案" {
+								// 				result.EnvironmentAlarmInfo.Value = float64(v)
+								// 			}
+								// 		}
+								// 	}
+								// case "int32", "Int32":
+								// 	{
+								// 		if v, ok := msg.Value.(int32); ok {
+								// 			if result.DeviceType == "设备档案" {
+								// 				result.EquipmentInfo.Value = float64(v)
+								// 			} else if result.DeviceType == "环境档案" {
+								// 				result.EnvironmentAlarmInfo.Value = float64(v)
+								// 			}
+								// 		}
+								// 	}
+								// case "int64", "Int64":
+								// 	{
+								// 		if v, ok := msg.Value.(int64); ok {
+								// 			if result.DeviceType == "设备档案" {
+								// 				result.EquipmentInfo.Value = float64(v)
+								// 			} else if result.DeviceType == "环境档案" {
+								// 				result.EnvironmentAlarmInfo.Value = float64(v)
+								// 			}
+								// 		}
+								// 	}
+								// case "Float":
+								// 	{
+								// 		if v, ok := msg.Value.(float64); ok {
+								// 			if result.DeviceType == "设备档案" {
+								// 				result.EquipmentInfo.Value = v
+								// 			} else if result.DeviceType == "环境档案" {
+								// 				result.EnvironmentAlarmInfo.Value = v
+								// 			}
+								// 		}
+								// 	}
+								// case "UInt16", "uint16":
+								// 	{
+								// 		if v, ok := msg.Value.(uint16); ok {
+								// 			if result.DeviceType == "设备档案" {
+								// 				result.EquipmentInfo.Value = float64(v)
+								// 			} else if result.DeviceType == "环境档案" {
+								// 				result.EnvironmentAlarmInfo.Value = float64(v)
+								// 			}
+								// 		}
+								// 	}
+								// case "Int16", "int16":
+								// 	{
+								// 		if v, ok := msg.Value.(int16); ok {
+								// 			if result.DeviceType == "设备档案" {
+								// 				result.EquipmentInfo.Value = float64(v)
+								// 			} else if result.DeviceType == "环境档案" {
+								// 				result.EnvironmentAlarmInfo.Value = float64(v)
+								// 			}
+								// 		}
+								// 	}
+								// case "Int8", "int8":
+								// 	{
+								// 		if v, ok := msg.Value.(int8); ok {
+								// 			if result.DeviceType == "设备档案" {
+								// 				result.EquipmentInfo.Value = float64(v)
+								// 			} else if result.DeviceType == "环境档案" {
+								// 				result.EnvironmentAlarmInfo.Value = float64(v)
+								// 			}
+								// 		}
+								// 	}
+								// case "UInt8", "uint8":
+								// 	{
+								// 		if v, ok := msg.Value.(uint8); ok {
+								// 			if result.DeviceType == "设备档案" {
+								// 				result.EquipmentInfo.Value = float64(v)
+								// 			} else if result.DeviceType == "环境档案" {
+								// 				result.EnvironmentAlarmInfo.Value = float64(v)
+								// 			}
+								// 		}
+								// 	}
+								// case "UInt64", "uint64":
+								// 	{
+								// 		if v, ok := msg.Value.(uint64); ok {
+								// 			if result.DeviceType == "设备档案" {
+								// 				result.EquipmentInfo.Value = float64(v)
+								// 			} else if result.DeviceType == "环境档案" {
+								// 				result.EnvironmentAlarmInfo.Value = float64(v)
+								// 			}
+								// 		}
+								// 	}
+								// }
 								result.DateSource = msg.SourceTime.Format("2006-01-02 15:04:05")
 								fmt.Println("发送数据到后台==222=============", result)
 								jsonStr, err := json.Marshal(result)

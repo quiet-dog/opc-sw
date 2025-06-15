@@ -47,6 +47,8 @@ func (o *OpcGateway) AddClinet(clientId string, config OpcClient) error {
 		Duration: config.Duration,
 		gateway:  o.notify,
 		Nodes:    config.Nodes,
+		Username: config.Username,
+		Password: config.Password,
 	}
 
 	go c.connect()

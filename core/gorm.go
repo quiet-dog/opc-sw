@@ -22,5 +22,5 @@ func InitOrm() {
 	)
 	global.DB = db
 	log.Println("完成orm======================")
-
+	global.Handler.Start()
 }

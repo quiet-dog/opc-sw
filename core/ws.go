@@ -1,7 +1,10 @@
 package core
 
 import (
+	"context"
 	"encoding/json"
+	"fmt"
+	"os"
 	"sw/global"
 	"sw/model/node"
 	"sw/opc"
@@ -139,13 +142,17 @@ func (c *Handler) OnOpen(socket *gws.Conn) {
 	// 		// }
 	// 	}
 	// }()
-
 	go func() {
 		for {
+			fmt.Println("线程=================")
+			ctx := context.Background()
 			select {
+			case <-ctx.Done():
+				return
 			case msg, ok := <-notifyChan:
 				{
 
+					fmt.Println("收到数据channel:", msg)
 					if !ok {
 						return
 					}
@@ -159,21 +166,52 @@ func (c *Handler) OnOpen(socket *gws.Conn) {
 					}
 					socket.WriteMessage(gws.OpcodeText, b)
 				}
-				// case msg, ok := <-testchanel:
-				// 	{
-				// 		if !ok {
-				// 			return
-				// 		}
-				// 		result, err := getResult(msg)
-				// 		if err != nil {
-				// 			continue
-				// 		}
-				// 		b, err := json.Marshal(result)
-				// 		if err != nil {
-				// 			continue
-				// 		}
-				// 		socket.WriteMessage(gws.OpcodeText, b)
-				// 	}
+
+			}
+		}
+	}()
+
+	go func() {
+		c := global.Handler.RegisterClientChannel()
+		ctx := context.Background()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case msg, ok := <-c:
+				{
+					if !ok {
+
+						return
+					}
+					f, _ := os.OpenFile("log.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+					defer f.Close()
+					if msg.Type == global.DEVICEDATA {
+						if v, ok := msg.Data.(opc.Data); ok {
+							result, err := getResult(v)
+							if err != nil {
+								continue
+							}
+							b, err := json.Marshal(result)
+							if err != nil {
+								continue
+							}
+							socket.WriteMessage(gws.OpcodeText, b)
+						}
+
+					} else {
+						jsonB, err := json.Marshal(msg)
+						if err != nil {
+							continue
+						}
+						f.Write([]byte(fmt.Sprintf("send data222: %s\n", string(jsonB))))
+						// 发送数据
+						if err = socket.WriteMessage(gws.OpcodeText, jsonB); err != nil {
+							f.Write([]byte(fmt.Sprintf("send data666: %s\n", err.Error())))
+						}
+					}
+
+				}
 			}
 		}
 	}()

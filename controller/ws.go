@@ -1,12 +1,14 @@
 package controller
 
 import (
+	"fmt"
 	"sw/global"
 
 	"github.com/gin-gonic/gin"
 )
 
 func Connect(c *gin.Context) {
+	fmt.Println("WebSocket connection established")
 	socket, err := global.Upgrader.Upgrade(c.Writer, c.Request)
 	if err != nil {
 		c.JSON(400, gin.H{"error": err.Error()})

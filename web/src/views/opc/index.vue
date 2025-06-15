@@ -2,10 +2,11 @@
 import { NDataTable } from 'naive-ui';
 import { useOpcHook } from '.';
 const { columns } = useOpcHook();
- 
-const { tableList }= defineProps<{
-    tableList: any[]
+
+const { tableList } = defineProps<{
+  tableList: any[]
 }>()
+
 
 </script>
 
@@ -15,6 +16,4 @@ const { tableList }= defineProps<{
   </div>
 </template>
 
-<style scoped>
-
-</style>
+<style scoped></style>
