@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"os"
 	"sw/global"
 	"sw/model/node"
 	"sw/opc"
@@ -48,7 +47,7 @@ func (c *Handler) OnOpen(socket *gws.Conn) {
 	keys, _ := global.Redis.Keys(global.Ctx, "*").Result()
 	for _, key := range keys {
 		var notify opc.Data
-		err := global.Redis.Get(global.Ctx, key).Scan(notify)
+		err := global.Redis.Get(global.Ctx, key).Scan(&notify)
 		if err != nil {
 			continue
 		}
@@ -75,7 +74,7 @@ func (c *Handler) OnOpen(socket *gws.Conn) {
 	// 		}
 	// 	}
 	// }()
-	// testchanel := make(chan opc.Data)
+	testchanel := make(chan opc.Data)
 
 	// go func() {
 	// 	{
@@ -138,10 +137,11 @@ func (c *Handler) OnOpen(socket *gws.Conn) {
 	// 			global.Redis.Set(global.Ctx, fmt.Sprintf("%d", v.ID), jsonByte, 0)
 	// 		}
 	// 		testchanel <- notify
-	// 		time.Sleep(3 * time.Second)
+	// 		time.Sleep(500 * time.Microsecond)
 	// 		// }
 	// 	}
 	// }()
+
 	go func() {
 		for {
 			fmt.Println("线程=================")
@@ -152,7 +152,27 @@ func (c *Handler) OnOpen(socket *gws.Conn) {
 			case msg, ok := <-notifyChan:
 				{
 
-					fmt.Println("收到数据channel:", msg)
+					fmt.Println("收到数据channel webscoket:", msg)
+					if !ok {
+						return
+					}
+					result, err := getResult(msg)
+					if err != nil {
+						continue
+					}
+					// fmt.Println("222", msg.Value)
+					b, err := json.Marshal(result)
+					if err != nil {
+						fmt.Println("转换数据错误====", err)
+						continue
+					}
+					fmt.Println("发送数据到websocket")
+					socket.WriteMessage(gws.OpcodeText, b)
+				}
+
+			case msg, ok := <-testchanel:
+				{
+					fmt.Println("收到测试数据channel:", msg)
 					if !ok {
 						return
 					}
@@ -166,7 +186,6 @@ func (c *Handler) OnOpen(socket *gws.Conn) {
 					}
 					socket.WriteMessage(gws.OpcodeText, b)
 				}
-
 			}
 		}
 	}()
@@ -184,8 +203,6 @@ func (c *Handler) OnOpen(socket *gws.Conn) {
 
 						return
 					}
-					f, _ := os.OpenFile("log.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-					defer f.Close()
 					if msg.Type == global.DEVICEDATA {
 						if v, ok := msg.Data.(opc.Data); ok {
 							result, err := getResult(v)
@@ -197,6 +214,7 @@ func (c *Handler) OnOpen(socket *gws.Conn) {
 								continue
 							}
 							socket.WriteMessage(gws.OpcodeText, b)
+						} else {
 						}
 
 					} else {
@@ -204,10 +222,9 @@ func (c *Handler) OnOpen(socket *gws.Conn) {
 						if err != nil {
 							continue
 						}
-						f.Write([]byte(fmt.Sprintf("send data222: %s\n", string(jsonB))))
 						// 发送数据
 						if err = socket.WriteMessage(gws.OpcodeText, jsonB); err != nil {
-							f.Write([]byte(fmt.Sprintf("send data666: %s\n", err.Error())))
+							continue
 						}
 					}
 
@@ -223,6 +240,8 @@ func (c *Handler) OnClose(socket *gws.Conn, err error) {
 		if notify, ok := v.(chan opc.Data); ok {
 			close(notify)
 		}
+		// 删除会话
+		global.Session.Delete(socket)
 	}
 }
 

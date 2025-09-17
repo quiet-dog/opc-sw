@@ -22,6 +22,7 @@ func main() {
 	core.InitOpc()
 	core.InitWs()
 	core.InitSw()
+	go core.InitKongTiao()
 	r := router.InitRouter()
 	st, _ := fs.Sub(f, "web/dist")
 	r.StaticFS("/static", http.FS(st))

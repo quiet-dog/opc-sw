@@ -3,7 +3,6 @@ package global
 import (
 	"context"
 	"fmt"
-	"os"
 	"sw/config"
 	"sw/opc"
 	"sync"
@@ -18,6 +17,7 @@ var (
 	YUZHI      = 1
 	BAOJING    = 2
 	ANIMATION  = 3
+	KETISAN    = 4
 )
 
 type RecHandler struct {
@@ -37,6 +37,7 @@ var (
 	Handler    = &HandlerChanel{
 		clients: sync.Map{},
 	}
+	MoniChannel = make(chan opc.Data, 5) // 监控通道，用于接收监控数据
 )
 
 type HandlerChanel struct {
@@ -66,14 +67,11 @@ func (h *HandlerChanel) Start() {
 			case <-ctx.Done():
 				return
 			case rec := <-RecChanel:
-				f, _ := os.OpenFile("log.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-				defer f.Close()
 				h.clients.Range(func(key, value interface{}) bool {
 					ch := key.(chan RecHandler)
 					select {
 					case ch <- rec: // 将消息发送到每个客户端通道
 						fmt.Println("senddata3333:", rec)
-						f.Write([]byte(fmt.Sprintf("send data: %v\n", rec)))
 					default:
 						// 如果通道满了，可以选择忽略或处理
 						fmt.Println("senddata4444:")

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"math"
 	"net/http"
 	"strconv"
 	"strings"
@@ -93,7 +94,7 @@ func InitSw() {
 
 					conn, _, err := websocket.DefaultDialer.Dial(url, header)
 					if err != nil {
-						fmt.Println("Failed to connect to WebSocket server: %v", err)
+						fmt.Printf("Failed to connect to WebSocket server: %v", err)
 						time.Sleep(5 * time.Second)
 						continue
 					}
@@ -146,15 +147,27 @@ func InitSw() {
 
 								if v, ok := msg.Value.(float64); ok {
 									if result.DeviceType == "设备档案" {
-										result.EquipmentInfo.Value = v
+										result.EquipmentInfo.Value = math.Round(v*100) / 100
 									} else if result.DeviceType == "环境档案" {
-										result.EnvironmentAlarmInfo.Value = v
+										result.EnvironmentAlarmInfo.Value = math.Round(v*100) / 100
 									}
 								} else if v, ok := msg.Value.(float32); ok {
 									if result.DeviceType == "设备档案" {
-										result.EquipmentInfo.Value = float64(v)
+										result.EquipmentInfo.Value = math.Round(float64(v)*100) / 100
 									} else if result.DeviceType == "环境档案" {
-										result.EnvironmentAlarmInfo.Value = float64(v)
+										result.EnvironmentAlarmInfo.Value = math.Round(float64(v)*100) / 100
+									}
+								} else if v, ok := msg.Value.(uint32); ok {
+									if result.DeviceType == "设备档案" {
+										result.EquipmentInfo.Value = math.Round(float64(v)*100) / 100
+									} else if result.DeviceType == "环境档案" {
+										result.EnvironmentAlarmInfo.Value = math.Round(float64(v)*100) / 100
+									}
+								} else if v, ok := msg.Value.(int32); ok {
+									if result.DeviceType == "设备档案" {
+										result.EquipmentInfo.Value = math.Round(float64(v)*100) / 100
+									} else if result.DeviceType == "环境档案" {
+										result.EnvironmentAlarmInfo.Value = math.Round(float64(v)*100) / 100
 									}
 								}
 

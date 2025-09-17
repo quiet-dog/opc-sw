@@ -31,11 +31,11 @@ type NodeId struct {
 }
 
 type Data struct {
-	ID         uint64
-	DataType   string
-	Value      interface{}
-	SourceTime time.Time
-	Param      string
+	ID         uint64      `json:"id"`
+	DataType   string      `json:"dataType"`
+	Value      interface{} `json:"value"`
+	SourceTime time.Time   `json:"sourceTime"`
+	Param      string      `json:"param"`
 }
 
 type TreeNode struct {
@@ -63,11 +63,17 @@ func (o *OpcClient) connect() {
 	}
 	ep.EndpointURL = o.Endpoint
 
+	/**
+
+		 opcua.SecurityPolicy("None"),
+	    opcua.SecurityMode(ua.MessageSecurityModeNone),
+	    opcua.AuthAnonymous(),
+	*/
 	opts := []opcua.Option{
 		opcua.SecurityPolicy("None"),                   // 设置为无安全策略
 		opcua.SecurityMode(ua.MessageSecurityModeNone), // 设置为无消息安全模式
-		opcua.CertificateFile(""),
-		opcua.PrivateKeyFile(""),
+		// opcua.CertificateFile(""),
+		// opcua.PrivateKeyFile(""),
 		// opcua.SecurityFromEndpoint(ep, ua.UserTokenTypeAnonymous), // 从 endpoint 自动提取安
 	}
 
@@ -75,7 +81,8 @@ func (o *OpcClient) connect() {
 		fmt.Println("使用用户名密码连接", o.Username, o.Password, o.Endpoint)
 		opts = append(opts, opcua.AuthUsername(o.Username, o.Password), opcua.SecurityFromEndpoint(ep, ua.UserTokenTypeUserName))
 	} else {
-		opts = append(opts, opcua.AuthAnonymous(), opcua.SecurityFromEndpoint(ep, ua.UserTokenTypeAnonymous))
+		//  opcua.SecurityFromEndpoint(ep, ua.UserTokenTypeAnonymous)
+		opts = append(opts, opcua.AuthAnonymous())
 	}
 
 	c, err := opcua.NewClient(ep.EndpointURL, opts...)
@@ -115,6 +122,7 @@ func (o *OpcClient) connect() {
 	treeNodeIDs := flattenTreeNodeIDs(nodeIDs)
 
 	for _, n := range o.Nodes {
+		exitIds = append(exitIds, n)
 		var isExit bool
 		for _, id := range treeNodeIDs {
 			fmt.Println("节点", id)

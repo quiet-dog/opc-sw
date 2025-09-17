@@ -25,5 +25,6 @@ func InitRouter() *gin.Engine {
 	a.POST("/recEnvYuZhiApi", controller.RecEnvYuZhiApi)
 	a.POST("/recSheBeiBaoJingApi", controller.RecBaoJingApi)
 	a.POST("/animation", controller.Animation)
+	a.POST("/ketisan", controller.KetiSan)
 	return r
 }

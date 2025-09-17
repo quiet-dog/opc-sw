@@ -1,0 +1,11 @@
+send data: {3 map[Data:map[RTB桶传入灭活柜:false 一楼高温蒸汽:false 二次灭活剂补加:false 传入隔离器主舱体:false 关闭动画:false 反应器送检:false 四个小白桶进入传递窗:false 大白桶分装进四个小桶:false 大白桶取出冰箱:false 大白桶进入冰箱:false 废料传入RTB:false 收获罐灭活剂补加:false 料液进入大白桶:true 毒种传入隔离器传递窗:false 灭活罐灭活剂补加:false 灭活罐送检:false 超低温冰箱获取毒种:false] systemName:AnimationController]}
+send data666: use of closed network connection
+send data: {3 map[Data:map[RTB桶传入灭活柜:false 一楼高温蒸汽:false 二次灭活剂补加:false 传入隔离器主舱体:false 关闭动画:false 反应器送检:false 四个小白桶进入传递窗:false 大白桶分装进四个小桶:false 大白桶取出冰箱:false 大白桶进入冰箱:false 废料传入RTB:false 收获罐灭活剂补加:false 料液进入大白桶:true 毒种传入隔离器传递窗:false 灭活罐灭活剂补加:false 灭活罐送检:false 超低温冰箱获取毒种:false] systemName:AnimationController]}
+send data: {3 map[Data:map[RTB桶传入灭活柜:false 一楼高温蒸汽:false 二次灭活剂补加:false 传入隔离器主舱体:false 关闭动画:false 反应器送检:false 四个小白桶进入传递窗:false 大白桶分装进四个小桶:false 大白桶取出冰箱:false 大白桶进入冰箱:false 废料传入RTB:false 收获罐灭活剂补加:false 料液进入大白桶:true 毒种传入隔离器传递窗:false 灭活罐灭活剂补加:false 灭活罐送检:false 超低温冰箱获取毒种:false] systemName:AnimationController]}
+send data: {3 map[Data:map[RTB桶传入灭活柜:false 一楼高温蒸汽:false 二次灭活剂补加:false 传入隔离器主舱体:false 关闭动画:false 反应器送检:false 四个小白桶进入传递窗:false 大白桶分装进四个小桶:false 大白桶取出冰箱:false 大白桶进入冰箱:false 废料传入RTB:false 收获罐灭活剂补加:false 料液进入大白桶:true 毒种传入隔离器传递窗:false 灭活罐灭活剂补加:false 灭活罐送检:false 超低温冰箱获取毒种:false] systemName:AnimationController]}
+send data666: use of closed network connection
+send data666: use of closed network connection
+send data: {3 map[Data:map[RTB桶传入灭活柜:false 一楼高温蒸汽:false 二次灭活剂补加:false 传入隔离器主舱体:false 关闭动画:true 反应器送检:false 四个小白桶进入传递窗:false 大白桶分装进四个小桶:false 大白桶取出冰箱:false 大白桶进入冰箱:false 废料传入RTB:false 收获罐灭活剂补加:false 料液进入大白桶:false 毒种传入隔离器传递窗:false 灭活罐灭活剂补加:false 灭活罐送检:false 超低温冰箱获取毒种:false] systemName:AnimationController]}
+send data: {3 map[Data:map[RTB桶传入灭活柜:false 一楼高温蒸汽:false 二次灭活剂补加:false 传入隔离器主舱体:false 关闭动画:true 反应器送检:false 四个小白桶进入传递窗:false 大白桶分装进四个小桶:false 大白桶取出冰箱:false 大白桶进入冰箱:false 废料传入RTB:false 收获罐灭活剂补加:false 料液进入大白桶:false 毒种传入隔离器传递窗:false 灭活罐灭活剂补加:false 灭活罐送检:false 超低温冰箱获取毒种:false] systemName:AnimationController]}
+send data666: use of closed network connection
+send data: {3 map[Data:map[RTB桶传入灭活柜:false 一楼高温蒸汽:false 二次灭活剂补加:false 传入隔离器主舱体:false 关闭动画:false 反应器送检:false 四个小白桶进入传递窗:false 大白桶分装进四个小桶:false 大白桶取出冰箱:false 大白桶进入冰箱:false 废料传入RTB:false 收获罐灭活剂补加:false 料液进入大白桶:true 毒种传入隔离器传递窗:false 灭活罐灭活剂补加:false 灭活罐送检:false 超低温冰箱获取毒种:false] systemName:AnimationController]}

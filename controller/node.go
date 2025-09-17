@@ -6,6 +6,7 @@ import (
 	"sw/opc"
 
 	"fmt"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -122,9 +123,12 @@ func RecDataApi(c *gin.Context) {
 	sd.DataType = "FLOAT64"
 	sd.ID = uint64(nodeModel.ID)
 	sd.Value = v
+	sd.SourceTime = time.Now()
+	sd.Param = nodeModel.Param
 	send.Data = sd
 	fmt.Println("发送数据1")
 	global.RecChanel <- send
+	global.MoniChannel <- sd
 	// c.JSON(200, gin.H{"message": "数据发送成功"})
 }
 
@@ -293,4 +297,18 @@ func Animation(c *gin.Context) {
 
 	global.RecChanel <- send
 	c.JSON(200, gin.H{"message": "动画控制数据发送成功"})
+}
+
+func KetiSan(c *gin.Context) {
+	var data map[string]interface{}
+	if err := c.ShouldBindJSON(&data); err != nil {
+		c.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
+
+	var send global.RecHandler
+	send.Type = global.KETISAN
+	send.Data = data
+	global.RecChanel <- send
+	c.JSON(200, gin.H{"message": "数据发送成功"})
 }
