@@ -7,6 +7,7 @@ import (
 	"log"
 	"math"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 	"sw/global"
@@ -16,6 +17,8 @@ import (
 	"github.com/go-stomp/stomp/v3"
 	"github.com/gorilla/websocket"
 )
+
+var closeChannel = make(chan int64, 1)
 
 // WebSocketReadWriteCloser 是 gorilla/websocket.Conn 的适配器
 type WebSocketReadWriteCloser struct {
@@ -43,6 +46,12 @@ func (w *WebSocketReadWriteCloser) Write(p []byte) (int, error) {
 
 // Close 实现 io.Closer 接口
 func (w *WebSocketReadWriteCloser) Close() error {
+	select {
+	case closeChannel <- 1:
+		// 成功发送关闭信号
+	default:
+		// 如果通道已满或已关闭，忽略，避免阻塞
+	}
 	return w.Conn.Close()
 }
 
@@ -103,212 +112,104 @@ func InitSw() {
 					rwc := &WebSocketReadWriteCloser{Conn: conn}
 
 					// 使用 STOMP 客户端连接
-					stompConn, err := stomp.Connect(rwc)
+					stompConn, err := stomp.Connect(rwc, stomp.ConnOpt.HeartBeat(10*time.Second, 10*time.Second), // 客户端每10秒发，期望服务端每10秒发
+						stomp.ConnOpt.HeartBeatError(30*time.Second))
 					if err != nil {
 						log.Fatalf("Failed to connect to STOMP: %v", err)
 					}
 					defer stompConn.Disconnect()
 
 					log.Println("Connected to STOMP server")
-
 					c := global.OpcGateway.SubscribeOpc()
-					for {
-						select {
-						case msg, ok := <-c:
-							{
-								if !ok {
-									return
-								}
+					func() {
+						for {
+							select {
+							case <-closeChannel:
+								fmt.Println("close le")
+								global.OpcGateway.UnSubscribeOpc(c)
+								return
+							case msg, ok := <-c:
+								{
+									if !ok {
+										return
+									}
 
-								result := DeviceDTO{}
-								nodeModel := node.NodeModel{}
-								global.DB.Where("id = ?", msg.ID).First(&nodeModel)
-								// 字符串切割
-								r := strings.Split(nodeModel.Param, "-")
-								if len(r) >= 4 {
-									for i := 0; i < len(r); i++ {
-										if r[i] == "deviceType" {
-											result.DeviceType = r[i+1]
-										} else if r[i] == "environmentId" {
-											if id, err := strconv.Atoi(r[i+1]); err == nil {
-												result.EnvironmentAlarmInfo.EnvironmentID = int64(id)
-											}
-										} else if r[i] == "thresholdId" {
-											if id, err := strconv.Atoi(r[i+1]); err == nil {
-												result.EquipmentInfo.ThresholdID = int64(id)
-											}
-										} else if r[i] == "equipmentId" {
-											if id, err := strconv.Atoi(r[i+1]); err == nil {
-												result.EquipmentInfo.EquipmentID = int64(id)
+									result := DeviceDTO{}
+									nodeModel := node.NodeModel{}
+									global.DB.Where("id = ?", msg.ID).First(&nodeModel)
+									// 字符串切割
+									r := strings.Split(nodeModel.Param, "-")
+									if len(r) >= 4 {
+										for i := 0; i < len(r); i++ {
+											if r[i] == "deviceType" {
+												result.DeviceType = r[i+1]
+											} else if r[i] == "environmentId" {
+												if id, err := strconv.Atoi(r[i+1]); err == nil {
+													result.EnvironmentAlarmInfo.EnvironmentID = int64(id)
+												}
+											} else if r[i] == "thresholdId" {
+												if id, err := strconv.Atoi(r[i+1]); err == nil {
+													result.EquipmentInfo.ThresholdID = int64(id)
+												}
+											} else if r[i] == "equipmentId" {
+												if id, err := strconv.Atoi(r[i+1]); err == nil {
+													result.EquipmentInfo.EquipmentID = int64(id)
+												}
 											}
 										}
 									}
-								}
 
-								if v, ok := msg.Value.(float64); ok {
-									if result.DeviceType == "设备档案" {
-										result.EquipmentInfo.Value = math.Round(v*100) / 100
-									} else if result.DeviceType == "环境档案" {
-										result.EnvironmentAlarmInfo.Value = math.Round(v*100) / 100
+									if v, ok := msg.Value.(float64); ok {
+										if result.DeviceType == "设备档案" {
+											result.EquipmentInfo.Value = math.Round(v*100) / 100
+										} else if result.DeviceType == "环境档案" {
+											result.EnvironmentAlarmInfo.Value = math.Round(v*100) / 100
+										}
+									} else if v, ok := msg.Value.(float32); ok {
+										if result.DeviceType == "设备档案" {
+											result.EquipmentInfo.Value = math.Round(float64(v)*100) / 100
+										} else if result.DeviceType == "环境档案" {
+											result.EnvironmentAlarmInfo.Value = math.Round(float64(v)*100) / 100
+										}
+									} else if v, ok := msg.Value.(uint32); ok {
+										if result.DeviceType == "设备档案" {
+											result.EquipmentInfo.Value = math.Round(float64(v)*100) / 100
+										} else if result.DeviceType == "环境档案" {
+											result.EnvironmentAlarmInfo.Value = math.Round(float64(v)*100) / 100
+										}
+									} else if v, ok := msg.Value.(int32); ok {
+										if result.DeviceType == "设备档案" {
+											result.EquipmentInfo.Value = math.Round(float64(v)*100) / 100
+										} else if result.DeviceType == "环境档案" {
+											result.EnvironmentAlarmInfo.Value = math.Round(float64(v)*100) / 100
+										}
 									}
-								} else if v, ok := msg.Value.(float32); ok {
-									if result.DeviceType == "设备档案" {
-										result.EquipmentInfo.Value = math.Round(float64(v)*100) / 100
-									} else if result.DeviceType == "环境档案" {
-										result.EnvironmentAlarmInfo.Value = math.Round(float64(v)*100) / 100
+									result.DateSource = msg.SourceTime.Format("2006-01-02 15:04:05")
+									fmt.Println("发送数据到后台==222=============", result)
+									jsonStr, err := json.Marshal(result)
+									if err != nil {
+										continue
 									}
-								} else if v, ok := msg.Value.(uint32); ok {
-									if result.DeviceType == "设备档案" {
-										result.EquipmentInfo.Value = math.Round(float64(v)*100) / 100
-									} else if result.DeviceType == "环境档案" {
-										result.EnvironmentAlarmInfo.Value = math.Round(float64(v)*100) / 100
+									fmt.Println("发送数据到后台===============", string(jsonStr))
+									if msg.ID == 88 {
+										os.Exit(0)
 									}
-								} else if v, ok := msg.Value.(int32); ok {
-									if result.DeviceType == "设备档案" {
-										result.EquipmentInfo.Value = math.Round(float64(v)*100) / 100
-									} else if result.DeviceType == "环境档案" {
-										result.EnvironmentAlarmInfo.Value = math.Round(float64(v)*100) / 100
+									err = stompConn.Send(global.Config.Sw.Topic, "application/json", jsonStr)
+									if err != nil {
+										fmt.Println("未发送成功:", err.Error())
+										break
 									}
 								}
-
-								// switch msg.DataType {
-								// case "float64", "Float64", "TypeIDFloat":
-								// 	{
-								// 		if v, ok := msg.Value.(float64); ok {
-								// 			if result.DeviceType == "设备档案" {
-								// 				result.EquipmentInfo.Value = v
-								// 			} else if result.DeviceType == "环境档案" {
-								// 				result.EnvironmentAlarmInfo.Value = v
-								// 			}
-								// 		} else {
-								// 			v, ok := msg.Value.(float32)
-								// 			if ok {
-								// 				if result.DeviceType == "设备档案" {
-								// 					result.EquipmentInfo.Value = float64(v)
-								// 				} else if result.DeviceType == "环境档案" {
-								// 					result.EnvironmentAlarmInfo.Value = float64(v)
-								// 				}
-								// 			}
-								// 		}
-								// 	}
-								// case "float32", "Float32":
-								// 	{
-								// 		if v, ok := msg.Value.(float32); ok {
-								// 			if result.DeviceType == "设备档案" {
-								// 				result.EquipmentInfo.Value = float64(v)
-								// 			} else if result.DeviceType == "环境档案" {
-								// 				result.EnvironmentAlarmInfo.Value = float64(v)
-								// 			}
-								// 		}
-								// 	}
-								// case "uint32", "UInt32":
-								// 	{
-								// 		if v, ok := msg.Value.(uint32); ok {
-								// 			if result.DeviceType == "设备档案" {
-								// 				result.EquipmentInfo.Value = float64(v)
-								// 			} else if result.DeviceType == "环境档案" {
-								// 				result.EnvironmentAlarmInfo.Value = float64(v)
-								// 			}
-								// 		}
-								// 	}
-								// case "int32", "Int32":
-								// 	{
-								// 		if v, ok := msg.Value.(int32); ok {
-								// 			if result.DeviceType == "设备档案" {
-								// 				result.EquipmentInfo.Value = float64(v)
-								// 			} else if result.DeviceType == "环境档案" {
-								// 				result.EnvironmentAlarmInfo.Value = float64(v)
-								// 			}
-								// 		}
-								// 	}
-								// case "int64", "Int64":
-								// 	{
-								// 		if v, ok := msg.Value.(int64); ok {
-								// 			if result.DeviceType == "设备档案" {
-								// 				result.EquipmentInfo.Value = float64(v)
-								// 			} else if result.DeviceType == "环境档案" {
-								// 				result.EnvironmentAlarmInfo.Value = float64(v)
-								// 			}
-								// 		}
-								// 	}
-								// case "Float":
-								// 	{
-								// 		if v, ok := msg.Value.(float64); ok {
-								// 			if result.DeviceType == "设备档案" {
-								// 				result.EquipmentInfo.Value = v
-								// 			} else if result.DeviceType == "环境档案" {
-								// 				result.EnvironmentAlarmInfo.Value = v
-								// 			}
-								// 		}
-								// 	}
-								// case "UInt16", "uint16":
-								// 	{
-								// 		if v, ok := msg.Value.(uint16); ok {
-								// 			if result.DeviceType == "设备档案" {
-								// 				result.EquipmentInfo.Value = float64(v)
-								// 			} else if result.DeviceType == "环境档案" {
-								// 				result.EnvironmentAlarmInfo.Value = float64(v)
-								// 			}
-								// 		}
-								// 	}
-								// case "Int16", "int16":
-								// 	{
-								// 		if v, ok := msg.Value.(int16); ok {
-								// 			if result.DeviceType == "设备档案" {
-								// 				result.EquipmentInfo.Value = float64(v)
-								// 			} else if result.DeviceType == "环境档案" {
-								// 				result.EnvironmentAlarmInfo.Value = float64(v)
-								// 			}
-								// 		}
-								// 	}
-								// case "Int8", "int8":
-								// 	{
-								// 		if v, ok := msg.Value.(int8); ok {
-								// 			if result.DeviceType == "设备档案" {
-								// 				result.EquipmentInfo.Value = float64(v)
-								// 			} else if result.DeviceType == "环境档案" {
-								// 				result.EnvironmentAlarmInfo.Value = float64(v)
-								// 			}
-								// 		}
-								// 	}
-								// case "UInt8", "uint8":
-								// 	{
-								// 		if v, ok := msg.Value.(uint8); ok {
-								// 			if result.DeviceType == "设备档案" {
-								// 				result.EquipmentInfo.Value = float64(v)
-								// 			} else if result.DeviceType == "环境档案" {
-								// 				result.EnvironmentAlarmInfo.Value = float64(v)
-								// 			}
-								// 		}
-								// 	}
-								// case "UInt64", "uint64":
-								// 	{
-								// 		if v, ok := msg.Value.(uint64); ok {
-								// 			if result.DeviceType == "设备档案" {
-								// 				result.EquipmentInfo.Value = float64(v)
-								// 			} else if result.DeviceType == "环境档案" {
-								// 				result.EnvironmentAlarmInfo.Value = float64(v)
-								// 			}
-								// 		}
-								// 	}
-								// }
-								result.DateSource = msg.SourceTime.Format("2006-01-02 15:04:05")
-								fmt.Println("发送数据到后台==222=============", result)
-								jsonStr, err := json.Marshal(result)
-								if err != nil {
-									continue
+							case <-ctx.Done():
+								{
+									fmt.Println("======")
+									return
 								}
-								fmt.Println("发送数据到后台===============", string(jsonStr))
-								// fmt.Println("发送数据到后台", string(jsonStr))
-
-								stompConn.Send(global.Config.Sw.Topic, "application/json", jsonStr)
-							}
-						case <-ctx.Done():
-							{
-								return
 							}
 						}
-					}
+					}()
+					fmt.Println("Reconnecting in 5 seconds...")
+					time.Sleep(5 * time.Second)
 				}
 			}
 		}

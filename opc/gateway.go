@@ -29,7 +29,12 @@ func New() *OpcGateway {
 				if ok {
 					o.sub.Range(func(key, value interface{}) bool {
 						ch := key.(chan Data)
-						ch <- msg
+						select {
+						case ch <- msg:
+							// 成功发送
+						default:
+							// 没人接收，跳过
+						}
 						return true
 					})
 					continue

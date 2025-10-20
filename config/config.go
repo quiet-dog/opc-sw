@@ -1,8 +1,9 @@
 package config
 
 type Config struct {
-	Sqlite Sqlite `json:"sqlite" yaml:"sqlite"`
-	Server Server `json:"server" yaml:"server"`
-	Sw     Sw     `json:"sw" yaml:"sw"`
-	Redis  Redis  `json:"redis" yaml:"redis"`
+	Sqlite      Sqlite  `json:"sqlite" yaml:"sqlite"`
+	Server      Server  `json:"server" yaml:"server"`
+	Sw          Sw      `json:"sw" yaml:"sw"`
+	Redis       Redis   `json:"redis" yaml:"redis"`
+	Ingorenodes []int64 `json:"ingorenodes" yaml:"ingorenodes"`
 }

@@ -11,6 +11,8 @@ import (
 )
 
 func InitOpc() {
+	fmt.Println(len(global.Config.Ingorenodes))
+
 	var service []*service.ServiceModel
 	global.DB.Find(&service)
 	log.Println("初始化opc")
@@ -21,10 +23,18 @@ func InitOpc() {
 		global.DB.Where("service_id = ?", s.ID).Find(&nodes)
 		var opcNodes []opc.NodeId
 		for _, n := range nodes {
-			opcNodes = append(opcNodes, opc.NodeId{
-				Node: n.NodeId,
-				ID:   uint64(n.ID),
-			})
+			isNotExit := false
+			for _, not := range global.Config.Ingorenodes {
+				if int64(n.ID) == not {
+					isNotExit = true
+				}
+			}
+			if !isNotExit {
+				opcNodes = append(opcNodes, opc.NodeId{
+					Node: n.NodeId,
+					ID:   uint64(n.ID),
+				})
+			}
 		}
 
 		opcIP := s.Opc

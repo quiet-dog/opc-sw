@@ -11,3 +11,11 @@ redis:
   port: 6379
   db: 0
   password: ""
+ingorenodes:
+  - 423
+  - 422
+  - 421
+  - 425
+  - 426
+  - 427
+  - 675

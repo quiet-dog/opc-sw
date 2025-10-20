@@ -2,10 +2,8 @@ package opc
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"log"
-	"os"
 	"time"
 
 	"github.com/gopcua/opcua"
@@ -99,49 +97,56 @@ func (o *OpcClient) connect() {
 
 	o.client = c
 
-	// 先从opc服务器获取所有节点
-	rootNode := ua.NewNumericNodeID(0, id.ObjectsFolder)
-	nodeIDs := browseNodeTree(ctx, o.client, rootNode)
-	// 写入json文件
-	f, err := os.OpenFile("/www/opc/"+fmt.Sprintf("%d", a)+".json", os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0666)
-	a++
-	if err != nil {
-		log.Fatal(err)
-		return
-	}
-	defer f.Close()
-	jsonData, err := json.Marshal(nodeIDs)
-	if err != nil {
-		log.Fatal(err)
-		return
-	}
-	f.Write(jsonData)
+	// // 先从opc服务器获取所有节点
+	// rootNode := ua.NewNumericNodeID(0, id.ObjectsFolder)
+	// nodeIDs := browseNodeTree(ctx, o.client, rootNode)
+	// // 写入json文件
+	// f, err := os.OpenFile("/www/opc/"+fmt.Sprintf("%d", a)+".json", os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0666)
+	// a++
+	// if err != nil {
+	// 	log.Fatal(err)
+	// 	return
+	// }
+	// defer f.Close()
+	// jsonData, err := json.Marshal(nodeIDs)
+	// if err != nil {
+	// 	log.Fatal(err)
+	// 	return
+	// }
+	// f.Write(jsonData)
 
 	exitIds := []NodeId{}
-	nodeExitIds := []string{}
-	treeNodeIDs := flattenTreeNodeIDs(nodeIDs)
+	// nodeExitIds := []string{}
+	// treeNodeIDs := flattenTreeNodeIDs(nodeIDs)
 
 	for _, n := range o.Nodes {
 		exitIds = append(exitIds, n)
-		var isExit bool
-		for _, id := range treeNodeIDs {
-			fmt.Println("节点", id)
-			if n.Node == id {
-				isExit = true
-				exitIds = append(exitIds, n)
-				break
-			}
-		}
-		if !isExit {
-			nodeExitIds = append(nodeExitIds, n.Node)
-		}
+		// var isExit bool
+		// for _, id := range treeNodeIDs {
+		// 	fmt.Println("节点", id)
+		// 	if n.Node == id {
+		// 		isExit = true
+		// 		exitIds = append(exitIds, n)
+		// 		break
+		// 	}
+		// }
+		// if !isExit {
+		// 	nodeExitIds = append(nodeExitIds, n.Node)
+		// }
 	}
-	fmt.Println("不存在的nodeId", nodeExitIds)
+	// if len(nodeExitIds) > 0 {
+	// 	fmt.Println("不存在的nodeId", nodeExitIds)
+	// 	f2, _ := os.OpenFile("/www/opc/"+"notexit.json", os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0666)
+	// 	notJson, _ := json.Marshal(nodeExitIds)
+	// 	f2.Write(notJson)
+	// 	f2.Close()
+	// }
+
 	o.Nodes = exitIds
 	notifyCh := make(chan *opcua.PublishNotificationData)
 
 	sub, err := c.Subscribe(ctx, &opcua.SubscriptionParameters{
-		Interval: opcua.DefaultSubscriptionInterval,
+		Interval: 30 * time.Second,
 	}, notifyCh)
 	if err != nil {
 		log.Fatal(err)
@@ -225,7 +230,10 @@ func (o *OpcClient) connect() {
 						}
 						fmt.Println("item.Value.Value.Type().String()", item.Value.Value.Type().String())
 						// 判断gateway是否关闭
-						o.gateway <- data
+						select {
+						case o.gateway <- data:
+						default:
+						}
 					}
 				}
 
