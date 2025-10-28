@@ -377,7 +377,35 @@ func (o *OpcClient) AddNodeID(n NodeId) error {
 
 func (o *OpcClient) valueRequest(nodeID *ua.NodeID, handle uint32) *ua.MonitoredItemCreateRequest {
 	// handle := uint32(42)
-	return opcua.NewMonitoredItemCreateRequestWithDefaults(nodeID, ua.AttributeIDValue, handle)
+
+	filter := &ua.DataChangeFilter{
+		Trigger:       ua.DataChangeTriggerStatusValueTimestamp, // 始终触发
+		DeadbandType:  uint32(ua.DeadbandTypeNone),              // 不使用死区
+		DeadbandValue: 0,
+	}
+
+	// 封装为扩展对象
+	filterExt := ua.NewExtensionObject(filter)
+
+	// 设置监控参数
+	params := &ua.MonitoringParameters{
+		ClientHandle:     handle,
+		SamplingInterval: 30000, // 每 30 秒采样一次
+		Filter:           filterExt,
+		QueueSize:        1, // 保留最新一条
+		DiscardOldest:    true,
+	}
+
+	// 构建监控请求
+	return &ua.MonitoredItemCreateRequest{
+		ItemToMonitor: &ua.ReadValueID{
+			NodeID:      nodeID,
+			AttributeID: ua.AttributeIDValue,
+		},
+		MonitoringMode:      ua.MonitoringModeReporting,
+		RequestedParameters: params,
+	}
+	// return opcua.NewMonitoredItemCreateRequestWithDefaults(nodeID, ua.AttributeIDValue, handle)
 }
 
 func eventRequest(nodeID *ua.NodeID) (*ua.MonitoredItemCreateRequest, []string) {
