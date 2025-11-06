@@ -33,7 +33,7 @@ func InitOpcCache() {
 					}
 					msg.Param = node.Param
 					id := fmt.Sprintf("%d", msg.ID)
-					global.Redis.Set(global.Ctx, id, string(jsonByte), 5*time.Second)
+					global.Redis.Set(global.Ctx, id, string(jsonByte), 60*time.Second)
 				}
 			}
 		}

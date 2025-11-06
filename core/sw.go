@@ -7,7 +7,7 @@ import (
 	"log"
 	"math"
 	"net/http"
-	"os"
+	"reflect"
 	"strconv"
 	"strings"
 	"sw/global"
@@ -130,6 +130,8 @@ func InitSw() {
 								return
 							case msg, ok := <-c:
 								{
+
+									fmt.Println("============收到数据", msg.ID, msg.Value)
 									if !ok {
 										return
 									}
@@ -159,44 +161,88 @@ func InitSw() {
 										}
 									}
 
-									if v, ok := msg.Value.(float64); ok {
+									rv := reflect.ValueOf(msg.Value)
+									kind := rv.Kind()
+
+									// 判断是否是数值类型
+									if (kind >= reflect.Int && kind <= reflect.Uint64) || kind == reflect.Float32 || kind == reflect.Float64 {
+										fv := rv.Convert(reflect.TypeOf(float64(0))).Float() // 转成 float64
+										fv = math.Round(fv*100) / 100                        // 保留两位小数
+
 										if result.DeviceType == "设备档案" {
-											result.EquipmentInfo.Value = math.Round(v*100) / 100
+											result.EquipmentInfo.Value = fv
 										} else if result.DeviceType == "环境档案" {
-											result.EnvironmentAlarmInfo.Value = math.Round(v*100) / 100
-										}
-									} else if v, ok := msg.Value.(float32); ok {
-										if result.DeviceType == "设备档案" {
-											result.EquipmentInfo.Value = math.Round(float64(v)*100) / 100
-										} else if result.DeviceType == "环境档案" {
-											result.EnvironmentAlarmInfo.Value = math.Round(float64(v)*100) / 100
-										}
-									} else if v, ok := msg.Value.(uint32); ok {
-										if result.DeviceType == "设备档案" {
-											result.EquipmentInfo.Value = math.Round(float64(v)*100) / 100
-										} else if result.DeviceType == "环境档案" {
-											result.EnvironmentAlarmInfo.Value = math.Round(float64(v)*100) / 100
-										}
-									} else if v, ok := msg.Value.(int32); ok {
-										if result.DeviceType == "设备档案" {
-											result.EquipmentInfo.Value = math.Round(float64(v)*100) / 100
-										} else if result.DeviceType == "环境档案" {
-											result.EnvironmentAlarmInfo.Value = math.Round(float64(v)*100) / 100
+											result.EnvironmentAlarmInfo.Value = fv
 										}
 									}
+
+									// if v, ok := msg.Value.(float64); ok {
+									// 	if result.DeviceType == "设备档案" {
+									// 		result.EquipmentInfo.Value = math.Round(v*100) / 100
+									// 	} else if result.DeviceType == "环境档案" {
+									// 		result.EnvironmentAlarmInfo.Value = math.Round(v*100) / 100
+									// 	}
+									// } else if v, ok := msg.Value.(float32); ok {
+									// 	if result.DeviceType == "设备档案" {
+									// 		result.EquipmentInfo.Value = math.Round(float64(v)*100) / 100
+									// 	} else if result.DeviceType == "环境档案" {
+									// 		result.EnvironmentAlarmInfo.Value = math.Round(float64(v)*100) / 100
+									// 	}
+									// } else if v, ok := msg.Value.(uint32); ok {
+									// 	if result.DeviceType == "设备档案" {
+									// 		result.EquipmentInfo.Value = math.Round(float64(v)*100) / 100
+									// 	} else if result.DeviceType == "环境档案" {
+									// 		result.EnvironmentAlarmInfo.Value = math.Round(float64(v)*100) / 100
+									// 	}
+									// } else if v, ok := msg.Value.(int32); ok {
+									// 	if result.DeviceType == "设备档案" {
+									// 		result.EquipmentInfo.Value = math.Round(float64(v)*100) / 100
+									// 	} else if result.DeviceType == "环境档案" {
+									// 		result.EnvironmentAlarmInfo.Value = math.Round(float64(v)*100) / 100
+									// 	}
+									// } else if v, ok := msg.Value.(int); ok {
+									// 	if result.DeviceType == "设备档案" {
+									// 		result.EquipmentInfo.Value = math.Round(float64(v)*100) / 100
+									// 	} else if result.DeviceType == "环境档案" {
+									// 		result.EnvironmentAlarmInfo.Value = math.Round(float64(v)*100) / 100
+									// 	}
+									// } else if v, ok := msg.Value.(int16); ok {
+									// 	if result.DeviceType == "设备档案" {
+									// 		result.EquipmentInfo.Value = math.Round(float64(v)*100) / 100
+									// 	} else if result.DeviceType == "环境档案" {
+									// 		result.EnvironmentAlarmInfo.Value = math.Round(float64(v)*100) / 100
+									// 	}
+									// } else if v, ok := msg.Value.(int32); ok {
+									// 	if result.DeviceType == "设备档案" {
+									// 		result.EquipmentInfo.Value = math.Round(float64(v)*100) / 100
+									// 	} else if result.DeviceType == "环境档案" {
+									// 		result.EnvironmentAlarmInfo.Value = math.Round(float64(v)*100) / 100
+									// 	}
+									// } else if v, ok := msg.Value.(int64); ok {
+									// 	if result.DeviceType == "设备档案" {
+									// 		result.EquipmentInfo.Value = math.Round(float64(v)*100) / 100
+									// 	} else if result.DeviceType == "环境档案" {
+									// 		result.EnvironmentAlarmInfo.Value = math.Round(float64(v)*100) / 100
+									// 	}
+									// } else if v, ok := msg.Value.(int); ok {
+									// 	if result.DeviceType == "设备档案" {
+									// 		result.EquipmentInfo.Value = math.Round(float64(v)*100) / 100
+									// 	} else if result.DeviceType == "环境档案" {
+									// 		result.EnvironmentAlarmInfo.Value = math.Round(float64(v)*100) / 100
+									// 	}
+									// }
+
 									result.DateSource = msg.SourceTime.Format("2006-01-02 15:04:05")
-									fmt.Println("发送数据到后台==222=============", result)
 									jsonStr, err := json.Marshal(result)
 									if err != nil {
 										continue
 									}
 									fmt.Println("发送数据到后台===============", string(jsonStr))
-									if msg.ID == 88 {
-										os.Exit(0)
-									}
+									// if msg.ID == 88 {
+									// 	os.Exit(0)
+									// }
 									err = stompConn.Send(global.Config.Sw.Topic, "application/json", jsonStr)
 									if err != nil {
-										fmt.Println("未发送成功:", err.Error())
 										break
 									}
 								}

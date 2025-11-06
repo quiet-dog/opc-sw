@@ -3,6 +3,7 @@ package opc
 import (
 	"context"
 	"errors"
+	"fmt"
 	"sync"
 	"time"
 )
@@ -20,7 +21,7 @@ type Config struct {
 
 func New() *OpcGateway {
 	o := &OpcGateway{}
-	o.notify = make(chan Data)
+	o.notify = make(chan Data, 3000)
 
 	go func() {
 		for {
@@ -31,9 +32,11 @@ func New() *OpcGateway {
 						ch := key.(chan Data)
 						select {
 						case ch <- msg:
+							fmt.Println("注册网关收到数据发送")
 							// 成功发送
 						default:
 							// 没人接收，跳过
+							fmt.Println("注册网关没人接收，跳过")
 						}
 						return true
 					})
@@ -56,7 +59,7 @@ func (o *OpcGateway) AddClinet(clientId string, config OpcClient) error {
 		Password: config.Password,
 	}
 
-	go c.connect()
+	go c.Start()
 	o.opcs.Store(clientId, c)
 	return nil
 }
@@ -73,7 +76,7 @@ func (o *OpcGateway) AddNode(clientId string, nodeId NodeId) error {
 
 // 订阅
 func (o *OpcGateway) SubscribeOpc() <-chan Data {
-	ch := make(chan Data)
+	ch := make(chan Data, 3000)
 	o.sub.Store(ch, nil)
 	return ch
 }

@@ -2,8 +2,11 @@ package opc
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
+	"net/url"
+	"os"
 	"time"
 
 	"github.com/gopcua/opcua"
@@ -17,6 +20,7 @@ type OpcClient struct {
 	client   *opcua.Client
 	sub      *opcua.Subscription
 	ctx      context.Context
+	cancel   context.CancelFunc
 	gateway  chan Data
 	Nodes    []NodeId
 	Username string
@@ -44,16 +48,33 @@ type TreeNode struct {
 
 var a = 0
 
-func (o *OpcClient) connect() {
-	ctx, cancel := context.WithTimeout(context.Background(), o.Duration)
-	defer cancel()
+func (o *OpcClient) Start() {
+	for {
+		err := o.connect()
+		if err != nil {
+			log.Printf("连接失败 [%s]，5秒后重试: %v", o.Endpoint, err)
+			time.Sleep(5 * time.Second)
+			continue
+		}
 
+		// 如果 connect 成功，阻塞直到断开
+		err = o.monitor()
+		log.Printf("连接中断 [%s]: %v，5秒后重连...", o.Endpoint, err)
+		time.Sleep(5 * time.Second)
+	}
+}
+
+func (o *OpcClient) connect() (err error) {
+	ctx, cancel := context.WithCancel(context.Background())
+	// defer cancel()
+	o.cancel = cancel
 	o.ctx = ctx
 	endpoints, err := opcua.GetEndpoints(ctx, o.Endpoint)
 	if err != nil {
 		// panic(err)
 		return
 	}
+
 	ep, err := opcua.SelectEndpoint(endpoints, ua.SecurityPolicyURINone, ua.MessageSecurityModeNone)
 	if err != nil {
 		log.Fatal(err)
@@ -88,32 +109,45 @@ func (o *OpcClient) connect() {
 		log.Fatal(err)
 		return
 	}
-	if err := c.Connect(ctx); err != nil {
+	if err = c.Connect(ctx); err != nil {
 		log.Fatal(err)
 		return
 	}
 	fmt.Printf("连接成功%s\n", o.Endpoint)
-	defer c.Close(ctx)
+	// defer c.Close(ctx)
 
 	o.client = c
+	return
+	// }()
+}
 
+func (o *OpcClient) monitor() (err error) {
+	defer func() {
+		if o.client != nil {
+			o.client.Close(o.ctx)
+		}
+	}()
 	// // 先从opc服务器获取所有节点
-	// rootNode := ua.NewNumericNodeID(0, id.ObjectsFolder)
-	// nodeIDs := browseNodeTree(ctx, o.client, rootNode)
-	// // 写入json文件
-	// f, err := os.OpenFile("/www/opc/"+fmt.Sprintf("%d", a)+".json", os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0666)
-	// a++
-	// if err != nil {
-	// 	log.Fatal(err)
-	// 	return
-	// }
-	// defer f.Close()
-	// jsonData, err := json.Marshal(nodeIDs)
-	// if err != nil {
-	// 	log.Fatal(err)
-	// 	return
-	// }
-	// f.Write(jsonData)
+	rootNode := ua.NewNumericNodeID(0, id.ObjectsFolder)
+	nodeIDs := browseNodeTree(o.ctx, o.client, rootNode)
+	u, err := url.Parse(o.Endpoint)
+	if err != nil {
+		return
+	}
+	// 写入json文件
+	f, err := os.OpenFile("/www/opc/"+u.Host+".json", os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0666)
+	a++
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
+	defer f.Close()
+	jsonData, err := json.Marshal(nodeIDs)
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
+	f.Write(jsonData)
 
 	exitIds := []NodeId{}
 	// nodeExitIds := []string{}
@@ -143,20 +177,25 @@ func (o *OpcClient) connect() {
 	// }
 
 	o.Nodes = exitIds
-	notifyCh := make(chan *opcua.PublishNotificationData)
+	notifyCh := make(chan *opcua.PublishNotificationData, 10)
 
-	sub, err := c.Subscribe(ctx, &opcua.SubscriptionParameters{
-		Interval: 30 * time.Second,
+	sub, err := o.client.Subscribe(o.ctx, &opcua.SubscriptionParameters{
+		Interval:                   10 * time.Second,
+		MaxKeepAliveCount:          1,
+		LifetimeCount:              0,
+		MaxNotificationsPerPublish: 0,
+		Priority:                   0,
 	}, notifyCh)
 	if err != nil {
 		log.Fatal(err)
 		return
 	}
-	defer sub.Cancel(ctx)
+	defer sub.Cancel(o.ctx)
 
 	mon := []*ua.MonitoredItemCreateRequest{}
 	for _, n := range o.Nodes {
-		id, err := ua.ParseNodeID(n.Node)
+		var id *ua.NodeID
+		id, err = ua.ParseNodeID(n.Node)
 		if err != nil {
 			log.Fatal("解析id失败", err)
 			return
@@ -165,7 +204,7 @@ func (o *OpcClient) connect() {
 		mon = append(mon, miCreateRequest)
 	}
 	fmt.Println("订阅节点", len(mon))
-	r, err := sub.Monitor(ctx, ua.TimestampsToReturnBoth, mon...)
+	r, err := sub.Monitor(o.ctx, ua.TimestampsToReturnBoth, mon...)
 	if err != nil {
 		fmt.Println("订阅失败", err)
 		return
@@ -187,15 +226,14 @@ func (o *OpcClient) connect() {
 	// sub.Monitor(ctx, ua.TimestampsToReturnBoth)
 
 	o.sub = sub
+
 	// go func() {
 	for {
 		select {
-		case <-ctx.Done():
+		case <-o.ctx.Done():
 			{
 				// 重新连接
-				fmt.Println("重新连接", o.Endpoint)
-				o.connect()
-				return
+				return fmt.Errorf("短线了")
 			}
 		case res := <-notifyCh:
 			fmt.Printf("Received publish notification: %v\n", res)
@@ -212,15 +250,13 @@ func (o *OpcClient) connect() {
 						continue
 					}
 					// 打印值
-					fmt.Println("item.Value", item.Value)
 					if item.Value.Value == nil {
 						fmt.Println("item.Value.Value == nil")
 						continue
 					}
 					// 打印值
-					fmt.Println("item.Value.Value", item.Value.Value)
 					data := item.Value.Value.Value()
-					log.Printf("MonitoredItem with client handle %v = %v", item.ClientHandle, data)
+					log.Printf("收到服务端数据 %v = %v ", item.ClientHandle, data)
 					if item.Value != nil {
 						data := Data{
 							ID:         uint64(item.ClientHandle),
@@ -228,10 +264,10 @@ func (o *OpcClient) connect() {
 							Value:      item.Value.Value.Value(),
 							SourceTime: item.Value.SourceTimestamp,
 						}
-						fmt.Println("item.Value.Value.Type().String()", item.Value.Value.Type().String())
 						// 判断gateway是否关闭
 						select {
 						case o.gateway <- data:
+							fmt.Println("发送到注册网关==")
 						default:
 						}
 					}
@@ -251,7 +287,6 @@ func (o *OpcClient) connect() {
 			}
 		}
 	}
-	// }()
 }
 
 // browseNodes 递归浏览节点并收集 NodeID
@@ -378,34 +413,61 @@ func (o *OpcClient) AddNodeID(n NodeId) error {
 func (o *OpcClient) valueRequest(nodeID *ua.NodeID, handle uint32) *ua.MonitoredItemCreateRequest {
 	// handle := uint32(42)
 
-	filter := &ua.DataChangeFilter{
-		Trigger:       ua.DataChangeTriggerStatusValueTimestamp, // 始终触发
-		DeadbandType:  uint32(ua.DeadbandTypeNone),              // 不使用死区
-		DeadbandValue: 0,
-	}
+	// filter := &ua.DataChangeFilter{
+	// 	Trigger:       ua.DataChangeTriggerStatusValueTimestamp, // 始终触发
+	// 	DeadbandType:  uint32(ua.DeadbandTypeNone),              // 不使用死区
+	// 	DeadbandValue: 0,
+	// }
 
-	// 封装为扩展对象
-	filterExt := ua.NewExtensionObject(filter)
+	// // 封装为扩展对象
+	// filterExt := ua.NewExtensionObject(filter)
 
-	// 设置监控参数
-	params := &ua.MonitoringParameters{
-		ClientHandle:     handle,
-		SamplingInterval: 30000, // 每 30 秒采样一次
-		Filter:           filterExt,
-		QueueSize:        1, // 保留最新一条
-		DiscardOldest:    true,
-	}
+	// // 设置监控参数
+	// params := &ua.MonitoringParameters{
+	// 	ClientHandle:     handle,
+	// 	SamplingInterval: 1000, // 每 30 秒采样一次
+	// 	Filter:           filterExt,
+	// 	QueueSize:        10, // 保留最新一条
+	// 	DiscardOldest:    true,
+	// }
 
-	// 构建监控请求
-	return &ua.MonitoredItemCreateRequest{
-		ItemToMonitor: &ua.ReadValueID{
-			NodeID:      nodeID,
-			AttributeID: ua.AttributeIDValue,
-		},
-		MonitoringMode:      ua.MonitoringModeReporting,
-		RequestedParameters: params,
-	}
-	// return opcua.NewMonitoredItemCreateRequestWithDefaults(nodeID, ua.AttributeIDValue, handle)
+	// // 构建监控请求
+	// return &ua.MonitoredItemCreateRequest{
+	// 	ItemToMonitor: &ua.ReadValueID{
+	// 		NodeID:      nodeID,
+	// 		AttributeID: ua.AttributeIDValue,
+	// 	},
+	// 	MonitoringMode:      ua.MonitoringModeReporting,
+	// 	RequestedParameters: params,
+	// }
+
+	// ===================================================
+
+	// params := &ua.MonitoringParameters{
+	// 	ClientHandle:     handle,
+	// 	SamplingInterval: 3000, // 3 秒采样
+	// 	QueueSize:        10,
+	// 	DiscardOldest:    true,
+	// 	Filter:           nil, // 先不要 Filter
+	// }
+
+	// mi := &ua.MonitoredItemCreateRequest{
+	// 	ItemToMonitor: &ua.ReadValueID{
+	// 		NodeID:      nodeID,
+	// 		AttributeID: ua.AttributeIDValue,
+	// 	},
+	// 	MonitoringMode:      ua.MonitoringModeReporting,
+	// 	RequestedParameters: params,
+	// }
+	// ========================================
+	// // 构建监控请求
+
+	mi := opcua.NewMonitoredItemCreateRequestWithDefaults(nodeID, ua.AttributeIDValue, handle)
+	mi.RequestedParameters.SamplingInterval = 10000
+	mi.RequestedParameters.QueueSize = 2
+	mi.RequestedParameters.DiscardOldest = false
+
+	return mi
 }
 
 func eventRequest(nodeID *ua.NodeID) (*ua.MonitoredItemCreateRequest, []string) {
