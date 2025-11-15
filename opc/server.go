@@ -75,7 +75,9 @@ func (o *OpcClient) connect() (err error) {
 		return
 	}
 
-	ep, err := opcua.SelectEndpoint(endpoints, ua.SecurityPolicyURINone, ua.MessageSecurityModeNone)
+	// ep, err := opcua.SelectEndpoint(endpoints, ua.SecurityPolicyURINone, ua.MessageSecurityModeNone)
+	ep, err := opcua.SelectEndpoint(endpoints, ua.SecurityPolicyURIBasic256Sha256, ua.MessageSecurityModeSignAndEncrypt)
+
 	if err != nil {
 		log.Fatal(err)
 		return
